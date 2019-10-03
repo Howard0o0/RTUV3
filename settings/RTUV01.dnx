@@ -1,0 +1,186 @@
+<?xml version="1.0"?>
+<settings>
+    <Stack>
+        <FillEnabled>0</FillEnabled>
+        <OverflowWarningsEnabled>1</OverflowWarningsEnabled>
+        <WarningThreshold>90</WarningThreshold>
+        <SpWarningsEnabled>1</SpWarningsEnabled>
+        <WarnLogOnly>1</WarnLogOnly>
+        <UseTrigger>1</UseTrigger>
+        <TriggerName>main</TriggerName>
+        <LimitSize>0</LimitSize>
+        <ByteLimit>50</ByteLimit>
+    </Stack>
+    <State_Storage>
+        <Control_Register>0</Control_Register>
+    </State_Storage>
+    <Sequencer>
+        <Control_Register>0</Control_Register>
+        <NextState0>0</NextState0>
+        <NextState1>0</NextState1>
+    </Sequencer>
+    <Action_Register>
+        <Break>2</Break>
+        <State_Storage>0</State_Storage>
+    </Action_Register>
+    <DebugChecksum>
+        <Checksum>809556554</Checksum>
+    </DebugChecksum>
+    <CallStack>
+        <ShowArgs>0</ShowArgs>
+    </CallStack>
+    <Disassembly>
+        <InstrCount>0</InstrCount>
+        <MixedMode>0</MixedMode>
+    </Disassembly>
+    <RecentFlashDownload>
+        <Path>C:\Users\Administrator\Documents\Tencent Files\736302927\FileRecv\RTUV10\Debug\Exe\RTUV01.d43</Path>
+    </RecentFlashDownload>
+    <Log_file>
+        <LoggingEnabled>_ 0</LoggingEnabled>
+        <LogFile>_ ""</LogFile>
+        <Category>_ 0</Category>
+    </Log_file>
+    <EEM_State_Storage>
+        <Buffer>010000000000000000000000</Buffer>
+    </EEM_State_Storage>
+    <EEM_Sequencer>
+        <Buffer>000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000</Buffer>
+    </EEM_Sequencer>
+    <EEM_Cycle_Counter_0>
+        <Counter0>0000000000000000000000000000000000000000000000000000000000000000</Counter0>
+    </EEM_Cycle_Counter_0>
+    <EEM_Cycle_Counter_1>
+        <Counter1>0000000000000000000000000000000000000000000000000000000000000000</Counter1>
+    </EEM_Cycle_Counter_1>
+    <CodeCoverage>
+        <Enabled>_ 0</Enabled>
+    </CodeCoverage>
+    <DriverProfiling>
+        <Enabled>0</Enabled>
+        <Mode>1</Mode>
+        <Graph>0</Graph>
+        <Symbiont>0</Symbiont>
+        <Exclusions />
+    </DriverProfiling>
+    <CallStackLog>
+        <Enabled>0</Enabled>
+    </CallStackLog>
+    <CallStackStripe>
+        <ShowTiming>1</ShowTiming>
+    </CallStackStripe>
+    <InterruptLog>
+        <LogEnabled>0</LogEnabled>
+        <GraphEnabled>0</GraphEnabled>
+        <ShowTimeLog>1</ShowTimeLog>
+        <SumEnabled>0</SumEnabled>
+        <ShowTimeSum>1</ShowTimeSum>
+        <SumSortOrder>0</SumSortOrder>
+    </InterruptLog>
+    <DataLog>
+        <LogEnabled>0</LogEnabled>
+        <GraphEnabled>0</GraphEnabled>
+        <ShowTimeLog>1</ShowTimeLog>
+        <SumEnabled>0</SumEnabled>
+        <ShowTimeSum>1</ShowTimeSum>
+    </DataLog>
+    <Breakpoints2>
+        <Bp0>_ 1 "STD_CODE2" "{$PROJ_DIR$\hydrology.c}.129.5" 0 0 1 "" 0 ""</Bp0>
+        <Count>1</Count>
+    </Breakpoints2>
+    <Interrupts>
+        <Enabled>1</Enabled>
+    </Interrupts>
+    <MemoryMap>
+        <Enabled>0</Enabled>
+        <Base>0</Base>
+        <UseAuto>0</UseAuto>
+        <TypeViolation>1</TypeViolation>
+        <UnspecRange>1</UnspecRange>
+        <ActionState>1</ActionState>
+    </MemoryMap>
+    <Trace1>
+        <Enabled>0</Enabled>
+        <ShowSource>1</ShowSource>
+    </Trace1>
+    <Simulator>
+        <Freq>1000000</Freq>
+        <FreqHi>0</FreqHi>
+    </Simulator>
+    <array_types>
+        <Fmt0>char[3]	4	0</Fmt0>
+        <Fmt1>char[4]	4	0</Fmt1>
+        <Fmt2>char[5]	4	0</Fmt2>
+        <Fmt3>char[6]	4	0</Fmt3>
+        <Fmt4>char[7]	3	0</Fmt4>
+    </array_types>
+    <watch_formats>
+        <Fmt0>{W}1:artificialnumbersize	3	1</Fmt0>
+        <Fmt1>{W}1:configinfosize	3	0</Fmt1>
+        <Fmt2>{W}1:crcRet	4	0</Fmt2>
+        <Fmt3>{W}1:data	4	0</Fmt3>
+        <Fmt4>{W}1:len	4	0</Fmt4>
+        <Fmt5>{W}1:unprocesseddata	3	0</Fmt5>
+    </watch_formats>
+    <DataSample>
+        <LogEnabled>0</LogEnabled>
+        <GraphEnabled>0</GraphEnabled>
+        <ShowTimeLog>1</ShowTimeLog>
+    </DataSample>
+    <LogFile>
+        <LoggingEnabled>_ 0</LoggingEnabled>
+        <LogFile>_ ""</LogFile>
+        <Category>_ 0</Category>
+    </LogFile>
+    <TermIOLog>
+        <LoggingEnabled>_ 0</LoggingEnabled>
+        <LogFile>_ ""</LogFile>
+    </TermIOLog>
+    <Breakpoints>
+        <Bp0>_ "STD_CODE" "{F:\}.1310.9" 0 0 0 0 "" 0 ""</Bp0>
+        <Bp1>_ "STD_CODE" "{F:\}.897.23" 0 0 0 0 "" 0 ""</Bp1>
+        <Bp2>_ "STD_CODE" "{F:\}.279.5" 0 0 0 0 "" 0 ""</Bp2>
+        <Bp3>_ "STD_CODE" "{D:\Program Files (x86)\IAR Systems\Embedded Workbench 8.0}.348.5" 0 0 0 0 "" 0 ""</Bp3>
+        <Bp4>_ "STD_CODE" "Memory:0xcfd8" 0 0 0 0 "" 0 ""</Bp4>
+        <Bp5>_ "STD_CODE" "{C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.0}.345.4" 0 0 0 0 "" 0 ""</Bp5>
+        <Bp6>_ "STD_CODE" "{G:\work\msp430\RTUV10_0826}.0.1" 0 0 0 0 "" 0 ""</Bp6>
+        <Bp7>_ "STD_CODE" "{G:\work\msp430\RTUV10_0826}.161.3" 0 0 0 0 "" 0 ""</Bp7>
+        <Bp8>_ "STD_CODE" "{$PROJ_DIR$\hydrologycommand.c}.169.5" 0 0 0 0 "" 0 ""</Bp8>
+        <Count>9</Count>
+    </Breakpoints>
+    <FET>
+        <Clock_mode>14</Clock_mode>
+        <Extended_Clock_mode>24599</Extended_Clock_mode>
+        <Secure_Password />
+        <Extended_Clock_Control_Enable>1</Extended_Clock_Control_Enable>
+        <Advanced_Extended_Clock_Control>0</Advanced_Extended_Clock_Control>
+        <Emulation_mode>0</Emulation_mode>
+        <Free_running>0</Free_running>
+        <Shutting_Down>3</Shutting_Down>
+    </FET>
+    <Memory_Dump>
+        <Start_address />
+        <Lenghth />
+        <Address_info>0</Address_info>
+        <Format>0</Format>
+        <Dump_registers>0</Dump_registers>
+        <PC>0</PC>
+        <SP>0</SP>
+        <SR>0</SR>
+        <all_registers>0</all_registers>
+        <File_name />
+    </Memory_Dump>
+    <Aliases>
+        <A0>_ "D:\yangfan\gitcode\RTUV10\Console.c" ""</A0>
+        <A1>_ "D:\yangfan\gitcode\RTUV10\common.c" ""</A1>
+        <A2>_ "D:\yangfan\gitcode\RTUV10\dtu.c" ""</A2>
+        <A3>_ "D:\yangfan\gitcode\RTUV10\led.c" ""</A3>
+        <A4>_ "D:\yangfan\gitcode\RTUV10\rtc.c" ""</A4>
+        <A5>_ "D:\yangfan\gitcode\RTUV10\store.c" ""</A5>
+        <A6>_ "D:\yangfan\gitcode\RTUV10\timer.c" ""</A6>
+        <A7>_ "F:\五\RTUV10\rom.c" ""</A7>
+        <A8>_ "F:\五\RTUV10\rtc.c" "F:\DGGH\RTUV10\rtc.c"</A8>
+        <Count>9</Count>
+        <SuppressDialog>1</SuppressDialog>
+    </Aliases>
+</settings>

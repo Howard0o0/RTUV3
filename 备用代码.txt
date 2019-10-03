@@ -1,0 +1,1352 @@
+
+ 
+int  Store_ReadDataItem(char * dest,char  index)
+{//
+    if(index > MAX_IDX || index< MIN_IDX)
+        return -2;
+    int addr=DATA_START_ADDR+ (index-MIN_IDX)*DATA_ITEM_LEN;
+    char CrcCode=0; char temp[7]; 
+    if(ROM_ReadByte(addr,&CrcCode)!=0)
+    {
+        return -1;
+    }
+    ++addr;
+    if(ROM_ReadBytes(addr,temp,DATA_ITEM_LEN-1)!=0)
+    {
+        return -1;
+    }
+    if(Utility_VerifyCrcCode(temp,CrcCode)!=0)
+        return -1;
+    //组装返回值 
+    
+    
+int  Store_ReadDataItemAuto(char * dest, char index)
+{
+    int ret=ROM_ReadDataItem(dest,index);
+    if(ret<0)
+        return ret;
+    //自动对StartIdx进行修正
+    if(index>=MAX_IDX) 
+        index=MIN_IDX; 
+    else
+        ++index;
+    RTC_SetStartIdx(index);
+    return 0;
+}
+int  Store_WriteDataItem( const char * src,char index)
+{//index是第一个空的可写的.
+    if(index > MAX_IDX || index< MIN_IDX)
+        return -2;
+    int addr=DATA_START_ADDR+ (index-MIN_IDX)*DATA_ITEM_LEN;
+    char CrcCode=Utility_GetCrcCode(src);
+    //写校验码
+    if(ROM_WriteByte(addr,CrcCode)!=0)
+    {
+        return -1;
+    }
+    ++addr;
+    //写数据
+    if(ROM_WriteBytes(addr,src,DATA_ITEM_LEN-1)!=0)
+    {
+        return -1; 
+    }
+    return 0;
+}
+int  Store_WriteDataItemAuto(const char * src, char  index)
+{
+    int ret=ROM_WriteDataItem(src,index);
+    if(ret<0)
+        return ret;
+    //自动对EndIdx进行修正
+    if(index>=MAX_IDX)
+        index=MIN_IDX;
+    else
+        ++index;
+    RTC_SetEndIdx(index);    
+    return 0;
+}
+
+
+////////////////////////////////////////
+//  ROM区域分配  地址为int类型,11位 
+//  起始地址: 0x0000  最高地址: 0x07FF 
+////////////////////////////////////////
+
+/////////////////////////////////////
+//基本设置区   0x0000 ~ 0x000F
+/////////////////////////////////////  
+//设置完整性字节 1字节,      0x0000  
+#define         CONFIG_ADDR    0x0000 
+//设备号         3字节 ,     0x0001 ~ 0x0003
+#define       DEVICENO_ADDR    0x0001 
+//密码           4字节       0x0004 ~ 0x0007   
+#define       PASSWORD_ADDR    0x0004 
+//报告数据  时间间隔模式       2字节,  0x0008 ~ 0x0009
+#define REPORTTIMEMODE_ADDR    0x0008 
+//保存数据  时间间隔模式       2字节,  0x00A ~ 0x000B
+#define   SAVETIMEMODE_ADDR    0x000A
+
+/////////////////////////////////////
+//数据中心区   0x0010 ~ 0x00DF
+/////////////////////////////////////   
+//数据中心号码 的个数          1字节,  0x0010  
+//程序最多支持5个,这里为以后保留.
+#define    CENTER_IP_ADDR_BASE   0x0010
+#define    CENTER_IP_LEN         5      
+//   数据中心1                5字节,  0x0011 ~ 0x0017
+#define    CENTER1_IP_ADDR        (CENTER_IP_ADDR_BASE)
+//   数据中心2                5字节,  0x0016 ~ 0x001A
+#define    CENTER2_IP_ADDR        (CENTER_IP_ADDR_BASE + 5)
+//   数据中心3                5字节,  0x001B ~ 0x001F
+#define    CENTER3_IP_ADDR        (CENTER_IP_ADDR_BASE + 10)
+//   数据中心4                5字节,  0x0020 ~ 0x0024
+#define    CENTER4_IP_ADDR        (CENTER_IP_ADDR_BASE + 15)
+//   数据中心5                5字节,  0x0025 ~ 0x0029 
+#define    CENTER5_IP_ADDR        (CENTER_IP_ADDR_BASE + 20)
+
+/////////////////////////////////////
+//统计以及错误相关区   0x00E0 ~ 0x00EF
+///////////////////////////////////// 
+//数据报警上限              2字节,  0x00E2~0x00E3  
+#define      DATA_MAX_ADDR    0x00E2
+//数据报警下限              2字节,  0x00E4~0x00E5  
+#define      DATA_MIN_ADDR    0x00E4
+
+/////////////////////////////////////
+//数据内容区   0x0110 ~0x07EF
+/////////////////////////////////////
+
+#define  DATA_START_ADDR          0x0110
+#define  DATA_ITEM_LEN            8    
+#define  DATA_ITEM_MAX            MAX_IDX
+#define  DATA_END_ADDR            (DATA_START_ADDR + DATA_ITEM_MAX*DATA_ITEM_LEN)
+ 
+
+//   数据操作 高级函数 
+
+int ROM_ReadDataMaxStr(int index ,char *dest)
+{
+    int repeats=0;char temp[2]; 
+    while(ROM_ReadBytes(DATA_MAX_ADDR,temp,2)!=0)
+    {
+        if(repeats>2)
+        {
+            Console_WriteStringln("ROM_ReadDataMax: fail !");
+            //++Device_ROM_ERROR;
+            return -1;
+        }
+        ++repeats;
+    }
+    int value=(((unsigned int)temp[0])<<8);value+=temp[1];
+    dest[0]=value/1000 +'0';
+    value %=1000;
+    dest[1]=value/100 +'0';
+    value %=100;
+    dest[2]=value/10 +'0';
+    dest[3]=value%10 +'0';
+    return 0;
+} 
+int ROM_ReadDataMaxInt(int index, int * pDestInt)
+{
+    int repeats=0;char temp[2];
+    while(ROM_ReadBytes(DATA_MAX_ADDR,temp,2)!=0)
+    {
+        if(repeats>2)
+        { 
+            Console_WriteStringln("ROM_ReadDataMax: fail !");
+            //++Device_ROM_ERROR;
+            return -1;
+        }
+        ++repeats;
+    }//转化为int
+    (*pDestInt)=((unsigned int)temp[0])<<8;(*pDestInt)+=temp[1];//高低位字节 
+    return 0;
+} 
+int ROM_SetDataMaxInt(int index, const int max)
+{
+    int repeats=0;char temp[2];
+    temp[0]=max>>8;temp[1]=max&0x00FF; 
+    while(ROM_WriteBytes(DATA_MAX_ADDR,temp,2)!=0)
+    {
+        if(repeats>2)
+        {
+            Console_WriteStringln("ROM_SetDataMax: fail !");
+            //++Device_ROM_ERROR;
+            return -1;
+        }
+        ++repeats;
+    }
+    return 0;
+} 
+int ROM_ReadDataMinInt(int index, int * pDestInt)
+{
+    int repeats=0;char temp[2];
+    while(ROM_ReadBytes(DATA_MIN_ADDR, temp,2)!=0)
+    {
+        if(repeats>2)
+        { 
+            Console_WriteStringln("ROM_ReadDataMin: fail !");
+            //++Device_ROM_ERROR;
+            return -1;
+        }
+        ++repeats;
+    }//转化为Int
+    (*pDestInt)=((unsigned int)temp[0])<<8;(*pDestInt)+=temp[1];//高低位字节 
+    return 0;
+}
+int ROM_ReadDataMinStr(int index, char *dest)
+{
+    int repeats=0;char temp[2];
+    while(ROM_ReadBytes(DATA_MIN_ADDR, temp,2)!=0)
+    {
+        if(repeats>2)
+        { 
+            Console_WriteStringln("ROM_ReadDataMin: fail !");
+            //++Device_ROM_ERROR;
+            return -1;
+        }
+        ++repeats;
+    }
+    int value=(((unsigned int)temp[0])<<8);value += temp[1];
+    dest[0]=value/1000 +'0';
+    value %=1000;
+    dest[1]=value/100 +'0';
+    value %=100;
+    dest[2]=value/10 +'0'; 
+    dest[3]=value%10 +'0';
+    return 0;
+} 
+//设置格式为4068
+int ROM_SetDataMinInt(int index, const int min)
+{
+    int repeats=0;char temp[2];
+    temp[0]=min>>8;temp[1]=min & 0x00FF ; //低位字节  
+    while(ROM_WriteBytes(DATA_MIN_ADDR,(char *)temp,2)!=0)
+    {
+        if(repeats>2)
+        {
+            Console_WriteStringln("ROM_SetDataMinInt: fail !");
+            //++Device_ROM_ERROR;
+            return -1;
+        }
+        ++repeats;
+    }
+    return 0;
+}
+ 
+int  ROM_ReadDataItem(char * dest,char  index)
+{//
+    if(index > MAX_IDX || index< MIN_IDX)
+        return -2;
+    int addr=DATA_START_ADDR+ (index-MIN_IDX)*DATA_ITEM_LEN;
+    char CrcCode=0; char temp[7]; 
+    if(ROM_ReadByte(addr,&CrcCode)!=0)
+    {
+        Console_WriteStringln("ROM_ReadDataItem: fail !");
+        //++Device_ROM_ERROR;
+        return -1;
+    }
+    ++addr;
+    if(ROM_ReadBytes(addr,temp,DATA_ITEM_LEN-1)!=0)
+    {
+        Console_WriteStringln("ROM_ReadDataItem: fail !");
+        //++Device_ROM_ERROR;
+        return -1;
+    }
+    if(Utility_VerifyCrcCode(temp,CrcCode)!=0)
+        return -1;
+    //组装返回值 
+    
+    
+    
+    
+    return 0;
+}
+int  ROM_ReadDataItemAuto(char * dest, char index)
+{
+    int ret=ROM_ReadDataItem(dest,index);
+    if(ret<0)
+        return ret;
+    //自动对StartIdx进行修正
+    if(index>=MAX_IDX) 
+        index=MIN_IDX; 
+    else
+        ++index;
+    RTC_SetStartIdx(index);
+    return 0;
+}
+int  ROM_WriteDataItem( const char * src,char index)
+{//index是第一个空的可写的.
+    if(index > MAX_IDX || index< MIN_IDX)
+        return -2;
+    int addr=DATA_START_ADDR+ (index-MIN_IDX)*DATA_ITEM_LEN;
+    char CrcCode=Utility_GetCrcCode(src);
+    //写校验码
+    if(ROM_WriteByte(addr,CrcCode)!=0)
+    {
+        return -1;
+    }
+    ++addr;
+    //写数据
+    if(ROM_WriteBytes(addr,src,DATA_ITEM_LEN-1)!=0)
+    {
+        return -1; 
+    }
+    return 0;
+}
+int  ROM_WriteDataItemAuto(const char * src, char  index)
+{
+    int ret=ROM_WriteDataItem(src,index);
+    if(ret<0)
+        return ret;
+    //自动对EndIdx进行修正
+    if(index>=MAX_IDX)
+        index=MIN_IDX;
+    else
+        ++index;
+    RTC_SetEndIdx(index);    
+    return 0;
+}
+
+
+int ROM_ReadConfig(char * dest)//  1个字节
+{ 
+    int repeats=0;
+    while(ROM_ReadByte(CONFIG_ADDR,dest)!=0)
+    {
+        if(repeats>2)
+        {
+            Console_WriteStringln("ROM_ReadConfig: fail !");
+            return -1;
+        }
+        ++repeats;
+    } 
+    return 0;
+}
+
+int ROM_SetConfig(char config)
+{
+     int repeats=0;
+     while(ROM_WriteByte(CONFIG_ADDR,config)!=0)
+     {
+         if(repeats>2)
+         {
+             Console_WriteStringln("ROM_SetConfig: fail !"); 
+             return -1;
+         }
+         ++repeats;
+     } 
+     return 0;
+} 
+// 3个字符型字节
+int ROM_ReadDeviceNO(char *dest)
+{
+  int repeats=0;
+  while(ROM_ReadBytes(DEVICENO_ADDR,dest,3)!=0)
+  {
+    if(repeats>2)
+    { Console_WriteStringln("ROM_ReadDeviceNO: fail !");
+      //++Device_ROM_ERROR;
+      return -1;
+    }
+    ++repeats;
+  }
+  return 0;
+}
+// 3个字符型字节
+int ROM_SetDeviceNO(const char *src)
+{
+  int repeats=0;
+  while(ROM_WriteBytes(DEVICENO_ADDR,src,3)!=0)
+  {
+    if(repeats>2)
+    { Console_WriteStringln("ROM_SetDeviceNO: fail !");
+      //++Device_ROM_ERROR;
+      return -1;
+    }
+    ++repeats;
+  }  
+  return 0;  
+}
+// 4个字符型字节
+int ROM_ReadPassWord(char *dest)
+{ 
+  int repeats=0;
+  while(ROM_ReadBytes(PASSWORD_ADDR,dest,4)!=0)
+  {
+    if(repeats>2)
+    { Console_WriteStringln("ROM_ReadPassWord: fail !");
+      //++Device_ROM_ERROR;
+      return -1;
+    }
+    ++repeats;
+  }
+  return 0;  
+} 
+// 4个字符型字节
+int ROM_SetPassWord(const char *src)
+{
+  int repeats=0;
+  while(ROM_WriteBytes(PASSWORD_ADDR,src,4)!=0)
+  {
+    if(repeats>2)
+    { Console_WriteStringln("ROM_SetPassWord: fail !");
+      //++Device_ROM_ERROR;
+      return -1;
+    }
+    ++repeats;
+  } 
+  return 0;  
+} 
+//2个字符型字节
+int ROM_ReadReportTimeMode(char * dest)
+{
+  int repeats=0;
+  while(ROM_ReadBytes(REPORTTIMEMODE_ADDR,dest,2)!=0)
+  {
+    if(repeats>2)
+    { Console_WriteStringln("ROM_ReadReportTimeMode: fail !");
+      //++Device_ROM_ERROR;
+      return -1;
+    }
+    ++repeats;
+  } 
+  return 0;  
+}
+//2个字符型字节
+int ROM_SetReportTimeMode(const char * src)
+{
+  int repeats=0;
+  while(ROM_WriteBytes(REPORTTIMEMODE_ADDR,src,2)!=0)
+  {
+    if(repeats>2)
+    { Console_WriteStringln("ROM_SetReportTimeMode: fail !");
+      //++Device_ROM_ERROR;
+      return -1;
+    }
+    ++repeats;
+  } 
+  return 0;  
+}
+//2个字符型字节
+int ROM_ReadSaveTimeMode(char *dest)
+{
+  int repeats=0;
+  while(ROM_ReadBytes(SAVETIMEMODE_ADDR,dest,2)!=0)
+  {
+    if(repeats>2)
+    { Console_WriteStringln("ROM_ReadSaveTimeMode: fail !");
+      //++Device_ROM_ERROR;
+      return -1;
+    }
+    ++repeats;
+  }
+  return 0;
+}
+
+//2个字符型字节
+int ROM_SetSaveTimeMode(const char * src)
+{
+  int times=0;
+  while(ROM_WriteBytes(SAVETIMEMODE_ADDR,src,2)!=0)
+  {
+    if(times>3)
+    { Console_WriteStringln("ROM_SetSensorTimeMode: fail !");
+      //++Device_ROM_ERROR;
+      return -1;
+    }
+    ++times;
+  } 
+  return 0;
+} 
+//  11个字符型字节
+int  ROM_ReadCenterIP(int index,char *dest)
+{ 
+    if(index<1||index>5)
+        return -2;
+    int repeats=0;
+    int addr=0;
+    switch(index)
+    {
+      case 1:
+        addr=CENTER1_IP_ADDR;
+        break;
+      case 2:
+        addr=CENTER2_IP_ADDR;
+        break;
+      case 3:
+        addr=CENTER3_IP_ADDR;
+        break;
+      case 4:
+        addr=CENTER4_IP_ADDR;
+        break;
+      case 5:
+        addr=CENTER5_IP_ADDR;
+        break;
+      default:
+        return -2;
+    }
+    while(ROM_ReadBytes(addr,dest,4)!=0) //4字节IP
+    {
+       if(repeats>2)
+       { Console_WriteStringln("ROM_ReadCenterIP: fail !");
+        //++Device_ROM_ERROR;
+          return -1;
+       }
+       ++repeats;
+    } 
+    return 0;  
+}
+//  11个字符型字节
+int ROM_SetCenterIP(int index,const char *src)
+{
+    if(index<=0||index>5)
+        return -2;
+    int repeats=0;
+    int addr=0;
+    switch(index)
+    {
+      case 1:
+        addr=CENTER1_IP_ADDR;
+        break;
+      case 2:
+        addr=CENTER2_IP_ADDR;
+        break;
+      case 3:
+        addr=CENTER3_IP_ADDR;
+        break;
+      case 4:
+        addr=CENTER4_IP_ADDR;
+        break;
+      case 5:
+        addr=CENTER5_IP_ADDR;
+        break;
+      default:
+        return -2;
+    }
+  while(ROM_WriteBytes(addr,src,4)!=0)
+  {
+    if(repeats>2)
+    {
+        Console_WriteStringln("ROM_SetCenterIP: fail !");
+        //++Device_ROM_ERROR;
+        return -1;
+    }
+    ++repeats;
+  } 
+  return 0;  
+} 
+
+
+
+    //检查基本长度,第1个#号,第5个#号,第8个#号
+    if(dataLen<=10||data[0]!='#' || data[5]!='#'|| data[8]!='#'
+       || data[dataLen-1]!='#')
+    {//非数据字节至少9个,数据字节至少11个
+        SIM_PackErrorMsg("UN",device,send);
+        return SIM_SendMsgTxt(rePhone,send,14); //14是第一个可写的下标 
+    }
+    ROM_ReadPassWord(send); //暂时利用send读一下 密码
+    if(str_ncmp(send,&(data[1]),4)!=0)
+    {//返回#设备号#UN#REJECT#
+        SIM_PackRejectMsg("UN",device,send);
+        return SIM_SendMsgTxt(rePhone,send,15); //15是第一个可写的下标
+    }
+    //  类型码 BS:  #1234#BS#123,0000,02,04,9999,9999 
+    //  类型码 NO:  #1234#NO#123#   设置设备号为123
+    //  类型码 MI:  #1234#MI#4344#  设置新密码为4344
+    //  类型码 SM:  #1234#SM#06#    设置数据保存间隔模式 saveMode
+    //  类型码 RM:  #1234#RM#05#    设置报告模式    reportMode   
+    //  类型码 MX:  #1234#MX#4096#  数据最大值
+    //  类型码 MN:  #1234#MN#0000#  数据最小值
+    //   
+    //  类型码 C1:  #1234#C1#13607193119,13607193119,00000000000#
+    //  类型码 C2:  #1234#C2#13607193119,00000000000#
+    //  类型码 LP:  #1234#LP#13607193119,13607193119#
+    //  类型码 TS:  #1234#TS#09,06,25,17,30# 
+    //  类型码 RP:  #1234#RP#TS#
+    //   
+    
+    //开始判断短信类型
+    int ret=0;
+    int min=0;int max=0;
+    char buffer[5];
+    switch(data[6])
+    {
+      case 'B': //BS
+      {
+          if(data[7]!='S')
+          {
+              SIM_PackErrorMsg("UN",device,send); 
+              return SIM_SendMsgTxt(rePhone,send,14);
+          }
+          //检查长度,逗号,以及数字
+          if(dataLen!=34 || data[12]!=',' || data[17]!=',' ||data[20]!=','
+             ||data[23]!=',' || data[28]!=','||CheckDigital(&(data[9]),3)
+                 ||CheckDigital(&(data[13]),4)||CheckDigital(&(data[18]),2)
+                     ||CheckDigital(&(data[21]),2)||CheckDigital(&(data[24]),4)
+                         ||CheckDigital(&(data[29]),4))
+          {
+              SIM_PackErrorMsg("BS",device,send); 
+              return SIM_SendMsgTxt(rePhone,send,14);
+          }
+          //开始响应设置, #1234#BS#123,0000,02,04,9999,9999   
+          if(data[9]!='0'||data[10]!='0'||data[11]!='0')
+              ret+=ROM_SetDeviceNO(&(data[9])); 
+          if(data[13]!='0' ||data[14]!='0' ||data[15]!='0'||data[16]!='0')
+              ret+=ROM_SetPassWord(&(data[13]));
+          if(data[18]!='0' || data[19]!='0')
+              ret+=ROM_SetSaveTimeMode(&(data[18]));
+          if(data[21]!='0' || data[22]!='0')
+              ret+=ROM_SetReportTimeMode(&(data[21]));
+          //不许大于4095,不许最小值比最大值 大
+          
+          if(data[24]!='9' || data[25]!='9' ||data[26]!='9'||data[27]!='9')
+          {
+              min= (data[24]-'0')*1000+(data[25]-'0')*100+ (data[26]-'0')*10
+                  + (data[27]-'0');
+              if(min>4095)
+              {
+                  SIM_PackFailMsg("BS",device,send);
+                  return SIM_SendMsgTxt(rePhone,send,13);
+              }
+          }
+          else
+              ret+=ROM_ReadDataMinInt(&min);//如果没有指定 ,就从ROm中读出.后续需要
+          
+          if(data[29]!='9' || data[30]!='9' ||data[31]!='9'||data[32]!='9')
+          {
+              max= (data[29]-'0')*1000+(data[30]-'0')*100+(data[31]-'0')*10
+                  +(data[32]-'0');
+              if(max>4095)
+              {
+                  ret=SIM_PackFailMsg("BS",device,send);
+                  return SIM_SendMsgTxt(rePhone,send,ret);
+              }
+          }
+          else
+              ret+=ROM_ReadDataMaxInt(&max);//如果没有指定 ,就从ROm中读出.后续需要
+          
+          if(min>=max)
+          {
+              ret=SIM_PackFailMsg("BS",device,send);
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+          //然后设置
+          ret+=ROM_SetDataMaxInt(max);//可能会无聊的读出写进一次.不过省了麻烦的判断
+          ret+=ROM_SetDataMinInt(min);
+          
+          if(ret<0)//某项设置失败
+          {
+              ret=SIM_PackFailMsg("BS",device,send);
+              return SIM_SendMsgTxt(rePhone,send,ret); 
+          }
+          else
+          {
+              ret=SIM_PackOKMsg("BS",device,send);
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+      }   
+      case 'N': //NO
+        if(data[7]!='O')
+        {
+            ret=SIM_PackErrorMsg("UN",device,send);
+            return SIM_SendMsgTxt(rePhone,send,ret);
+        }
+        //检查长度,和 数字
+        if(dataLen!=13 ||  CheckDigital(&(data[9]),3))
+        {
+            ret=SIM_PackErrorMsg("NO",device,send);
+            return SIM_SendMsgTxt(rePhone,send,ret);
+        }
+        //开始响应设置
+        //#1234#NO#123#   设置设备号为123
+        if(data[9]=='0' && data[10]=='0' && data[11]=='0') //要是2个都是0, 就不理睬这样的短信.
+            return 0;
+        
+        if(ROM_SetDeviceNO(&(data[9]))<0)
+        {
+            ret=SIM_PackFailMsg("NO",device,send);
+            return SIM_SendMsgTxt(rePhone,send,ret);
+        }
+        else
+        {
+            ret=SIM_PackOKMsg("NO",device,send);
+            return SIM_SendMsgTxt(rePhone,send,ret);
+        } 
+      case 'S': //SM
+        if(data[7]!='M'||data[8]!='#')
+        {
+            ret=SIM_PackErrorMsg("UN",device,send);
+            return SIM_SendMsgTxt(rePhone,send,ret);
+        }
+        //检查长度 和数字,
+        if(dataLen!=12 || CheckDigital(&(data[9]),2))
+        {
+            ret=SIM_PackErrorMsg("SM",device,send); 
+            return SIM_SendMsgTxt(rePhone,send,ret);
+        }
+        //开始响应设置
+        //  类型码 SM:  #1234#SM#06#    设置数据保存间隔模式 saveMode
+            
+        if(data[9]=='0' && data[10]=='0') //要是2个都是0, 就不设置也不返回短信
+        {
+            //并重新计算下一次时间.
+            CalculateSaveTime(buffer);
+            RTC_SetSaveTime(buffer);
+            return 0;
+        }
+        
+        if(ROM_SetSaveTimeMode(&(data[9]))<0)
+        {
+            ret=SIM_PackFailMsg("SM",device,send);
+            return SIM_SendMsgTxt(rePhone,send,ret);
+        }
+        else
+        {
+            CalculateSaveTime(buffer);
+            RTC_SetSaveTime(buffer);
+            ret=SIM_PackOKMsg("SM",device,send);
+            return SIM_SendMsgTxt(rePhone,send,ret);
+        }
+      case 'R': //RP RM
+        if(data[7]!='P' && data[7]!='M')
+        {
+          ret=SIM_PackErrorMsg("UN",device,send);
+          return SIM_SendMsgTxt(rePhone,send,ret);
+        }
+        if(data[7]=='P')
+        {
+            //检查数据字节长度在 2  
+            if(dataLen!=12 )
+            {
+             ret=SIM_PackErrorMsg("RP",device,send); 
+             return SIM_SendMsgTxt(rePhone,send,ret);
+            }
+            //开始响应设置;  #1234#RP#TS#    #1234#RP#TS#
+            if(data[9]=='T'&& data[10]=='M')
+            {//#123#TM#09/06/10/17:30,09/06/10/17:30,09/06/10/17:30#
+               ret=SIM_PackTMMsg(device,send);
+               if(ret<0)
+               {
+                   ret=SIM_PackFailMsg("RP",device,send);
+                   return SIM_SendMsgTxt(rePhone,send,ret);
+               }
+               return SIM_SendMsgTxt(rePhone,send,ret);
+            }
+            if(data[9]=='T'&& data[10]=='S')
+            {
+               ret= SIM_PackTSMsg(device,send);
+               if(ret<0)
+               {
+                   ret=SIM_PackFailMsg("RP",device,send);
+                   return SIM_SendMsgTxt(rePhone,send,ret);
+               }
+               return SIM_SendMsgTxt(rePhone,send,ret);
+            }
+            if(data[9]=='C'&& data[10]=='1')
+            {
+               ret= SIM_PackC1Msg(device,send);
+               if(ret<0)
+               {
+                  SIM_PackFailMsg("RP",device,send);
+                  return SIM_SendMsgTxt(rePhone,send,13);
+               }
+               return SIM_SendMsgTxt(rePhone,send,ret);
+            }
+            if(data[9]=='C'&& data[10]=='2')
+            {
+               ret= SIM_PackC2Msg(device,send);
+               if(ret<0)
+               {
+                  ret=SIM_PackFailMsg("RP",device,send);
+                  return SIM_SendMsgTxt(rePhone,send,ret);
+               }
+               return SIM_SendMsgTxt(rePhone,send,ret);
+            }
+            if(data[9]=='L'&& data[10]=='P')
+            {
+               ret= SIM_PackLPMsg(device,send);
+               if(ret<0)
+               {
+                   ret=SIM_PackFailMsg("RP",device,send);
+                   return SIM_SendMsgTxt(rePhone,send,ret);
+               }
+               return SIM_SendMsgTxt(rePhone,send,ret);
+             }
+             if(data[9]=='D'&& data[10]=='T')
+             {
+                ret= SIM_PackDTMsg(device,send);
+                if(ret<0)
+                {
+                   ret=SIM_PackFailMsg("RP",device,send);
+                   return SIM_SendMsgTxt(rePhone,send,ret);
+                }
+                return SIM_SendMsgTxt(rePhone,send,ret);
+             }
+             if(data[9]=='B'&& data[10]=='S')
+             {
+                ret= SIM_PackBSMsg(device,send);
+                if(ret<0)
+                {
+                   ret=SIM_PackFailMsg("RP",device,send);
+                   return SIM_SendMsgTxt(rePhone,send,ret);
+                }
+                return SIM_SendMsgTxt(rePhone,send,ret);
+              }
+              //都不是,则发送一个出错.
+              ret=SIM_PackErrorMsg("RP",device,send);
+              return SIM_SendMsgTxt(rePhone,send,ret);
+        }
+        if(data[7]=='M')
+      {
+          //检查长度
+          if(dataLen!=12|| CheckDigital(&(data[9]),2))
+          {
+              ret=SIM_PackErrorMsg("RM",device,send); 
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+          //开始响应设置
+          //  类型码 RM:  #1234#RM#05#    设置报告模式    reportMode 
+          if(data[9]=='0' && data[10]=='0') //要是2个都是0, 就不理睬这样的短信.
+          {
+              CalculateReportTime(buffer);
+              RTC_SetReportTime(buffer); 
+              return 0;
+          }
+          
+          if(ROM_SetReportTimeMode(&(data[9]))<0)
+          {
+              ret=SIM_PackFailMsg("RM",device,send);
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+          else
+          {  
+              CalculateReportTime(buffer);
+              RTC_SetReportTime(buffer); 
+              ret=SIM_PackOKMsg("RM",device,send);
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+      }
+      break;
+    case 'M': //MI  MX MN
+      if(data[7]!='I' && data[7]!='X' && data[7]!='N' )
+      {
+          ret=SIM_PackErrorMsg("UN",device,send);
+          return SIM_SendMsgTxt(rePhone,send,ret);   
+      }
+      if(data[7]=='I')
+      {
+          //检查长度
+          if(dataLen!=14 || CheckDigital(&(data[9]),4))
+          {
+              ret=SIM_PackErrorMsg("MI",device,send); 
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+          //开始响应设置
+          //  类型码 MI:  #1234#MI#4344#  设置新密码为4344
+          //要是4个都是0, 就不理睬这样的短信.
+          if(data[9]=='0' && data[10]=='0' && data[11]=='0' && data[12]=='0' ) 
+              return 0;
+          if(ROM_SetPassWord(&(data[9]))<0)
+          {
+              ret=SIM_PackFailMsg("MI",device,send);
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+          else
+          {
+              ret=SIM_PackOKMsg("MI",device,send);
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+      }
+      if(data[7]=='X')
+      {
+          //检查长度
+          if(dataLen!= 14 || CheckDigital(&(data[9]),4))
+          {
+              ret=SIM_PackErrorMsg("MX",device,send); 
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+          //开始响应设置
+          //  类型码 MX:  #1234#MX#4096#  数据最大值
+          
+          if(data[9]=='9' && data[10]=='9' &&data[11]=='9' &&data[12]=='9')
+              return 0;
+          
+          max= (data[9]-'0')*1000+(data[10]-'0')*100+(data[11]-'0')*10
+              +(data[12]-'0');
+          ret=0;
+          ret=ROM_ReadDataMinInt(&min); //读出min来参与 判断
+          if(max>4096 || max <=min)
+          {
+              ret=SIM_PackErrorMsg("MX",device,send);
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+          if(ret<0 || ROM_SetDataMaxInt(max)<0)
+          {
+              ret=SIM_PackFailMsg("MX",device,send);
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+          else
+          {
+              ret=SIM_PackOKMsg("MX",device,send);
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+          
+      }
+      if(data[7]=='N')
+      {
+          //检查长度
+          if(dataLen!=14 || CheckDigital(&(data[9]),4))
+          {
+              ret=SIM_PackErrorMsg("MN",device,send); 
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+          //开始响应设置
+          //  类型码 MN:  #1234#MN#0000#  数据最小值
+          if(data[9]=='9' && data[10]=='9' &&data[11]=='9' &&data[12]=='9')
+              return 0;
+          
+          min= (data[9]-'0')*1000+(data[10]-'0')*100+(data[11]-'0')*10
+              +(data[12]-'0');
+          ret=0;
+          ret=ROM_ReadDataMaxInt(&max);
+          if(min>4096 || max <=min)
+          {
+              ret=SIM_PackErrorMsg("MN",device,send);
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+          if(ret<0 ||ROM_SetDataMinInt(min)<0)
+          {
+              ret=SIM_PackFailMsg("MN",device,send);
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+          else
+          {
+              ret=SIM_PackOKMsg("MN",device,send);
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+      }
+    case 'C': //C1 C2
+      if(data[7]!='1' && data[7]!='2')
+      {
+          ret=SIM_PackErrorMsg("UN",device,send);
+          return SIM_SendMsgTxt(rePhone,send,ret);
+      }
+      if(data[7]=='1')
+      {
+          //检查长度
+          if(dataLen!=45 ||CheckDigital(&(data[9]),11)||CheckDigital(&(data[21]),11)||CheckDigital(&(data[33]),11)
+             ||data[20]!=',' || data[32]!=',')
+          {
+              ret=SIM_PackErrorMsg("C1",device,send); 
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+          //开始响应设置 
+          //  类型码 C1:  #1234#C1#13607193119,13607193119,00000000000#   
+          if(data[9]!='9' || data[10]!='9' || data[11]!='9')
+          { 
+              if(ROM_SetCenterPhone(&(data[9]),1)<0)
+              {
+                  ret=SIM_PackErrorMsg("C1",device,send);
+                  return SIM_SendMsgTxt(rePhone,send,ret);
+              }
+          }
+          if(data[21]!='9' || data[22]!='9'  || data[23]!='9')
+          {  
+              if(ROM_SetCenterPhone(&(data[21]),2)<0)
+              {
+                  ret=SIM_PackErrorMsg("C1",device,send);
+                  return SIM_SendMsgTxt(rePhone,send,ret);
+              }
+          }
+          if(data[33]!='9' || data[34]!='9' || data[35]!='9')
+          { 
+              if(ROM_SetCenterPhone(&(data[33]),3)<0)
+              {
+                  ret=SIM_PackErrorMsg("C1",device,send);
+                  return SIM_SendMsgTxt(rePhone,send,ret);
+              }
+          }
+          ret=SIM_PackOKMsg("C1",device,send);
+          return SIM_SendMsgTxt(rePhone,send,ret);  
+      }
+      if(data[7]=='2')
+      {
+          //检查长度 
+          if(dataLen!=33 || CheckDigital(&(data[9]),11) || CheckDigital(&(data[21]),11) || data[20]!=',')
+          {
+              ret=SIM_PackErrorMsg("C2",device,send);
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+          //开始响应设置
+          //  类型码 C2:  #1234#C1#13607193119,00000000000#  
+          if(data[9]!='9' || data[10]!='9' || data[11]!='9')
+          { 
+               if(ROM_SetCenterPhone(&(data[9]),4)<0)
+               {
+                   ret=SIM_PackErrorMsg("C2",device,send);
+                   return SIM_SendMsgTxt(rePhone,send,ret);
+               }
+          }
+          if(data[21]!='9' || data[22]!='9' || data[23]!='9')
+          { 
+              if(ROM_SetCenterPhone(&(data[21]),5)<0)
+              {
+                  ret=SIM_PackErrorMsg("C2",device,send);
+                  return SIM_SendMsgTxt(rePhone,send,ret);
+              }
+          }
+          ret=SIM_PackOKMsg("C2",device,send);
+          return SIM_SendMsgTxt(rePhone,send,ret);  
+      } 
+    case 'L': //LP
+      if(data[7]!='P')
+      {
+          ret=SIM_PackErrorMsg("UN",device,send);
+          return SIM_SendMsgTxt(rePhone,send,ret);
+      }
+      //检查长度
+      if(dataLen!=33|| CheckDigital(&(data[9]),11) ||CheckDigital(&(data[21]),11) 
+             ||data[20]!=',' )
+      {
+          ret=SIM_PackErrorMsg("LP",device,send); 
+          return SIM_SendMsgTxt(rePhone,send,ret);
+      }
+      //开始响应设置
+      //  类型码 LP:  #1234#LP#13607193119,13607193119#
+      if(data[9]!='9' || data[10]!='9' || data[11]!='9')
+      {//忽略设置,则返回成功 
+          if(ROM_SetLeaderPhone(&(data[9]),1)<0)
+          {
+              ret=SIM_PackErrorMsg("LP",device,send);
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+      }
+      if(data[21]!='9' || data[22]!='9' || data[23]!='9')
+      {
+          if(ROM_SetLeaderPhone(&(data[21]),2)<0)
+          {
+              ret=SIM_PackErrorMsg("LP",device,send);
+              return SIM_SendMsgTxt(rePhone,send,ret);
+          }
+      }
+      ret=SIM_PackOKMsg("LP",device,send);
+      return SIM_SendMsgTxt(rePhone,send,ret); 
+    case 'T': //TS
+      if(data[7]!='S')
+      {
+          ret=SIM_PackErrorMsg("UN",device,send);
+          return SIM_SendMsgTxt(rePhone,send,ret);
+      }
+      //检查长度数字和逗号
+      if(dataLen!=20 || CheckDigital(&(data[9]),10))
+      {
+          ret=SIM_PackErrorMsg("TS",device,send); 
+          return SIM_SendMsgTxt(rePhone,send,ret);
+      }
+      //开始响应设置
+      //类型码 TS:  #1234#TS#0906251730#
+      //判断月份是否为00
+      if(data[11]!='0' ||data[12]!='0')
+      {
+          RTC_SetTimeStr5_B(&(data[9]));
+      }
+      ret=SIM_PackTSMsg(device,send);
+      return SIM_SendMsgTxt(rePhone,send,ret);
+    
+    default:
+      ret=SIM_PackErrorMsg("UN",device,send);
+      return SIM_SendMsgTxt(rePhone,send,ret);
+  }
+  
+  
+  
+  
+
+
+
+
+//
+//  中级函数
+// 
+//
+//    失败
+//
+//
+/*
+int SIM_SendMsgPDU(char * phoneNum, char *data,int dataLen)
+{//构造PDU串.
+//我们最多发送 . 
+    int retNum=0;
+    int times1=0;
+    int times2=0;
+    if(dataLen>130)
+        return -2;
+    if(dataLen<0)
+        return -2;
+            
+    char pdu[300];
+    char temp[20];
+    if(SIM_AT_GetCsca(temp)<0) 
+        return -2;
+    
+    pdu[0]=0x08;
+    pdu[1]=0x91;
+    pdu[2]=0x68;
+    pdu[3]=((temp[1]-'0')<<4)+ temp[0]-'0';
+    pdu[4]=((temp[3]-'0')<<4)+ temp[2]-'0';
+    pdu[5]=((temp[5]-'0')<<4)+ temp[4]-'0';
+    pdu[6]=((temp[7]-'0')<<4)+ temp[6]-'0';
+    pdu[7]=((temp[9]-'0')<<4)+ temp[8]-'0';
+    pdu[8]=(0x0F<<4)+ temp[10]-'0';
+    
+    pdu[9]=0x11;
+    pdu[10]=0x00;
+    pdu[11]=0x0D;
+    pdu[12]=0x91;
+    pdu[13]=0x68;
+    pdu[14]=((phoneNum[1]-'0')<<4)+ phoneNum[0]-'0';
+    pdu[15]=((phoneNum[3]-'0')<<4)+ phoneNum[2]-'0';
+    pdu[16]=((phoneNum[5]-'0')<<4)+ phoneNum[4]-'0';
+    pdu[17]=((phoneNum[7]-'0')<<4)+ phoneNum[6]-'0';
+    pdu[18]=((phoneNum[9]-'0')<<4)+ phoneNum[8]-'0';
+    pdu[19]=(0x0F<<4)+ phoneNum[10]-'0';
+    pdu[20]=0x00;
+    pdu[21]=0x08;
+    //有效期
+    pdu[22]=0x00;
+    //pdu[23] 用户数据长度 先空缺.
+    //短信数据
+    for(int i=0;i<dataLen;++i)
+    {//data中只会有数字和字母
+        //对应unicode加0x00即可
+        pdu[24+2*i]=0x00;
+        pdu[24+2*i+1]=data[i];
+    }
+    pdu[23]=dataLen*2;//每个字符2字节 
+    //下一个可写位置是pdu[24+2*dataLen]
+    char send[MAXBUFFLEN]="AT+CMGS=";//长度";
+SendMsgPDU:
+    Console_WriteStringln("SIM_SendMsgPDU:Send a Msg");
+    phoneNum[11]='\0';
+    Console_WriteStringln(phoneNum);
+    //pdu串长度为24+2*dataLen
+    int len=24+dataLen*2;
+    if(len>99)
+    {
+        send[8]=len/100+'0';
+        len%=100;
+        send[9]=len/10+'0';
+        send[10]=len%10+'0';
+        len=11;
+    }
+    else
+    {//肯定为2位数了.
+        send[8]=len/10+'0';
+        send[9]=len%10+'0';
+        len=10;
+    }
+    
+    //切换为PDU方式
+    if(SIM_AT_SetMsgmode(0)<0)
+    {
+        SIM_AT_SetMsgmode(1);
+        return -3;
+    }
+    
+    SIM_AT_QuitInput();//避免前一个失败的 > 符号带来的混乱
+    SIM_DealAll();// 发送前,我们需要 清空接收 缓冲区 ,
+    UART0_ClearInput();//清 > 符号标记为0
+    
+    UART0_Send(send,len,1);
+    
+    //等待 > 提示符号
+    if(UART0_WaitInput()==-1)
+    {
+        ++SIM_TimeOut;
+        //  没等到的话,可能是因为返回其它数据
+        //  处理 为空
+        SIM_DealAll();
+        Console_WriteStringln("SIM_SendMsgPDU:WaitInput Fail !");
+        //SIM可能傻了.
+        //我们让GSM休息休息
+        delay_ms(500); 
+        SIM_AT_SetMsgmode(1);
+        return -1;
+    }
+    Console_WriteStringln("SIM_SendMsgPDU:Got > :");
+     //等到了 > 提示符号
+    WARN3();
+    //发送数据
+    pdu[24+2*dataLen]=0x1A;//CTRL+Z 
+    UART0_Send(pdu,25+2*dataLen,0);
+    Console_WriteStringln("SIM_SendMsgPDU:Send PDU."); 
+    //   这里我们延时10秒等待短信发送成功.
+    //   等待收到+CMGS   以及一个OK. 
+    //开始延时.
+    Console_WriteStringln("SIM_SendMsgPDU:Waiting !");
+    delay_ms(10000);
+    if(UART0_RecvLineLongTry(send,MAXBUFFLEN,&retNum)<0)
+    {//短信发送 未成功
+        ++SIM_MsgFail;
+        SIM_AT_QuitInput();
+        if(times1>2)
+        {
+            Console_WriteStringln("SIM_SendMsgPDU:Send fail finally !");
+            SIM_AT_SetMsgmode(1);
+            return -1;
+        }
+        ++times1;
+        Console_WriteStringln("SIM_SendMsgPDU:Send fail,try again !");
+        goto SendMsgPDU;
+    }
+    if(str_ncmp(send,"+CMGS: ",7)==0)
+    {//成功
+        Console_WriteStringln("SIM_SendMsgPDU:Send OK !");
+        WARN4();
+        if(UART0_RecvLineTry(send,MAXBUFFLEN,&retNum)==0)
+            SIM_Deal(send);
+        //收没收到OK,都无所谓.
+        ++SIM_MsgOK; 
+        SIM_AT_SetMsgmode(1);
+        return 0;
+    }
+    Console_WriteStringln("SIM_SendMsgPDU:Others data,send fail !");
+    Console_WriteStringln(send);
+    SIM_Deal(send);
+    ++SIM_MsgFail;
+    if(times2 >2)
+    {//避免错误 祸害 后续AT指令
+        SIM_AT_QuitInput();
+        SIM_AT_SetMsgmode(1);
+        return -2;
+    }
+    ++times2;
+    goto SendMsgPDU; 
+}
+*/
+
+
+
+int  Main_GSMProc1() //节电模式
+{
+    char _checkTime[5];
+    char _saveTime[5]; 
+    char _reportTime[5];
+    char _buffer[200];
+    Console_Open(); 
+    Console_WriteStringln("CPU wakeup!");
+    Console_WriteStringln("RTC Time is: ");
+    Console_WriteIntln(g_rtc_nowTime[0]);
+    Console_WriteIntln(g_rtc_nowTime[1]);
+    Console_WriteIntln(g_rtc_nowTime[2]);
+    Console_WriteIntln(g_rtc_nowTime[3]);
+    Console_WriteIntln(g_rtc_nowTime[4]);
+    
+    RTC_ReadTimeArray5(g_rtc_nowTime); 
+    if(RTC_IsBadTime(g_rtc_nowTime)<0)
+    {//时间出错,请求一个时间设置短信
+       DTU_Open();
+       if(DTU_CheckOK()<0)
+       {
+           DTU_Open();
+           if(DTU_CheckOK()<0)
+               return -1;
+       }
+       DTU_PackRqMsg(RQ_TM,_buffer);
+       DTU_Send(_buffer);
+       DTU_Waiting_Proccess(1);
+       //时间设定函数,会自动修改g_rtcnowTime 
+       if(RTC_IsBadTime(g_rtc_nowTime)<0)
+       {//说明没等待时间改动函数,或者仍然是错误的
+           return -2;
+       }
+    }
+    if(RTC_ReadCheckTime(_checkTime)<0)
+    {//数据丢失,就当检查时间到了.
+        _checkTime[0]=0x00;_checkTime[1]=0x00;_checkTime[2]=0x00;_checkTime[3]=0x00;_checkTime[4]=0x00; 
+    }
+    if(RTC_IsPassed(_checkTime)>=0)
+    {//检查时间到了
+       Sampler_Open();
+       Sampler_Sample();
+       Sampler_Close();
+       Utility_CalculateNextCheckTime(_checkTime);
+       RTC_SetCheckTime(_checkTime);
+       //判断是否需要保存
+       if(RTC_ReadSaveTime(_saveTime)<0)
+       {//数据丢失,就当是保存时间到了???
+        //先判断下当前时间是否是保存时间避免掉了这个时间.
+        // 宁愿这个时间点 有2个数据, 也不要丢失.
+           if(Utility_Is_A_SaveTime(g_rtc_nowTime))
+           {//是一个保存点.
+               //那我们就设   保存时间=现在时间.
+               _saveTime[0]=g_rtc_nowTime[0];_saveTime[1]=g_rtc_nowTime[1];_saveTime[2]=g_rtc_nowTime[2];
+               _saveTime[3]=g_rtc_nowTime[3];_saveTime[4]=g_rtc_nowTime[4];
+               RTC_SetSaveTime(_saveTime);
+               //下一步的isPassed会被通过.
+           }
+           else
+           {//如果不是保存点.就计算下一个保存点了
+               Utility_CalculateNextSaveTime(_saveTime);
+               RTC_SetSaveTime(_saveTime);
+           }
+       }
+       if(RTC_IsPassed(_saveTime)>=0)
+       {//保存时间到了
+           
+           //计算下一次保存时间 
+           Utility_CalculateNextSaveTime(_saveTime);
+           RTC_SetSaveTime(_saveTime);
+           
+           //Store_SaveData();
+           
+       }
+       if(RTC_ReadReportTime(_reportTime)<0)
+       {//数据丢失,就当报告时间到了
+           _reportTime[0]=0x00;_reportTime[1]=0x00;_reportTime[2]=0x00;_reportTime[3]=0x00;_reportTime[4]=0x00;
+       }
+       if(RTC_IsPassed(_reportTime)>=0)
+       {//报告时间到了
+           //计算下一次报告时间
+           Utility_CalculateNextReportTime(_reportTime);
+           RTC_SetReportTime(_reportTime);
+           
+           DTU_Open();
+           if(DTU_CheckOK()<0)
+           {
+               DTU_Open();
+               if(DTU_CheckOK()<0)
+               {//无法工作就放弃了.
+                   DTU_Close();
+                   return -1;
+               }
+           }
+           DTU_Report();          //进行数据上报
+           DTU_Waiting_Proccess(1);//等待上位机进行配置
+           DTU_Alert_Proccess();//检查数据是否异常
+           DTU_Close();//关闭DTU
+           
+           
+       }
+       else
+       {//不进行发送的时候,我们还考虑是否进行报警
+           if(Sampler_CheckNormal())
+           {
+                DTU_Open();
+                if(DTU_CheckOK()<0)
+                {
+                    DTU_Open();
+                    if(DTU_CheckOK()<0)
+                    {//
+                       return -1; 
+                    }
+                }
+                DTU_Alert_Proccess();//DTU进行报警相关的处理
+                DTU_Close();
+            }
+        }
+    } 
+    return 0; 
+}
