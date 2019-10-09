@@ -229,7 +229,7 @@ void BC95_QueryState()
 	}
 }
 
-void BC95_QueryTime(char *year,char *month,char *date,char *hour,char *min,char *second)
+int BC95_QueryTime(char *year,char *month,char *date,char *hour,char *min,char *second)
 {
 /* char *year,char *month,char *date,char *hour,char *min,char *second */
 	int _repeat = 0;
@@ -298,8 +298,11 @@ void BC95_QueryTime(char *year,char *month,char *date,char *hour,char *min,char 
 		*hour =( (hour1-48)*10 + (hour2-48)) + 8;
 		*min = (min1-48)*10 + (min2-48);
 		*second = (sec1-48)*10 + (sec2-48);
+
+		return 0;
 	}
 
+	return -1;
 }
 
 

@@ -23,6 +23,8 @@
 #include "hydrologycommand.h"
 #include "rom.h"
 #include "BC95.h"
+#include "blueTooth.h"
+#include "communicateManager.h"
 
 int IsDebug = 0;
 
@@ -41,28 +43,60 @@ int main(void)
 
     Main_Init();
 
+    /* ble test */
+    BleDriverInstall();
+    printf("BLE driver installed \r\n");
+    
+
+    PT_CommunicateDev  ptDevBle =  getCommunicateDev("BLE");
+    if(ptDevBle == NULL)
+    {
+        printf("BLE not registerd !\r\n");
+        return 0;
+    }
+
+    printf("BLE is waiting for matched in 30s ...\r\n");
+    ptDevBle->init();
+    while (1)
+    {
+        
+        if(ptDevBle->isCanUse())
+        {
+            if( ptDevBle->open() != 0)
+            {
+                printf("ble open failed! \r\n");
+                continue;
+            }
+            ptDevBle->sendMsg("hahaha",6);
+            ptDevBle->close();
+        }
+
+        System_Delayms(1000);
+    }
+
+    /* End of BLE test */
     
 
     /* BC95 Test */
-    char flag = BC95_Open();
-    if (flag == 1)
-    {
-       printf("BC95 open error \r\n");
-       BC95_Close();
-    }
-    BC95_ConfigProcess();
-    int iRet = BC95_SetTimeZoneBeijing();
-    if(iRet == 1)
-    {
-        printf("Beijing Time Zone set OK \r\n");
-    }
-    while (1)
-    {
-        char year,month,date,hour,min,second;
-        BC95_QueryTime(&year,&month,&date,&hour,&min,&second);
-        printf(" %u : %u \r\n",hour,min);
-        System_Delayms(1000);
-    }
+    // char flag = BC95_Open();
+    // if (flag == 1)
+    // {
+    //    printf("BC95 open error \r\n");
+    //    BC95_Close();
+    // }
+    // BC95_ConfigProcess();
+    // int iRet = BC95_SetTimeZoneBeijing();
+    // if(iRet == 1)
+    // {
+    //     printf("Beijing Time Zone set OK \r\n");
+    // }
+    // while (1)
+    // {
+    //     char year,month,date,hour,min,second;
+    //     BC95_QueryTime(&year,&month,&date,&hour,&min,&second);
+    //     printf(" %u : %u \r\n",hour,min);
+    //     System_Delayms(1000);
+    // }
     
 
     /* BC95 test */

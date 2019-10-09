@@ -72,7 +72,7 @@ BC95State BC95_ConnectToIotCloud(char *serverIp, char *serverPort);
 BC95State BC95_SendUdpMsg(char *ipAddr,char *port, char *msg);   // invalid when loaded with 电信卡
 void BC95_AtTest(void);
 char *makeUDPBody(char *socket,char *ipAddr,char *port,char *len,char *data);  // invalid when loaded with 电信卡
-void BC95_QueryTime(char *year,char *month,char *date,char *hour,char *min,char *second);
+int BC95_QueryTime(char *year,char *month,char *date,char *hour,char *min,char *second);  //success return 0, fail return -1
 int BC95_SetTimeZoneBeijing(void);
 
 

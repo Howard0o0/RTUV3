@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project>
     <fileVersion>2</fileVersion>
-    <fileChecksum>3557961774</fileChecksum>
+    <fileChecksum>4017741005</fileChecksum>
     <configuration>
         <name>Debug</name>
         <outputs>
@@ -165,11 +165,14 @@
             <file>$PROJ_DIR$\bootble.c</file>
             <file>$PROJ_DIR$\bootble.h</file>
             <file>$PROJ_DIR$\Debug\Obj\bootble.__cstat.et</file>
+            <file>$PROJ_DIR$\communicateManager.c</file>
             <file>$PROJ_DIR$\Debug\Obj\blueTooth.r43</file>
             <file>$PROJ_DIR$\communicateManager.h</file>
             <file>$PROJ_DIR$\blueTooth.h</file>
             <file>$PROJ_DIR$\blueTooth.c</file>
             <file>$PROJ_DIR$\Debug\Obj\blueTooth.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\communicateManager.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\communicateManager.r43</file>
         </outputs>
         <file>
             <name>$PROJ_DIR$\timer.c</name>
@@ -541,11 +544,11 @@
             <inputs>
                 <tool>
                     <name>ICC430</name>
-                    <file> 53 75 70 33 130 91 88 124 97 90 73 40 138 84 61 41 42 69 86 141 111 139 48 143 66 1 34 29 83 128 93 109 44 58 51 9</file>
+                    <file> 53 75 70 33 130 91 88 124 97 90 73 40 138 84 61 41 42 69 86 141 111 139 48 143 66 1 34 29 83 128 93 109 44 58 51 9 163 162</file>
                 </tool>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 93 48 91 86 34 9 61 138 88 42 111 66 83 58 75 70 41 69 141 139 143 1 29 128 109 51 130 124 40 53 44 33 84 73 97 90</file>
+                    <file> 93 48 86 34 9 91 42 111 66 83 58 162 130 70 138 88 41 69 141 139 143 1 29 128 109 51 163 75 61 124 40 53 44 33 84 73 97 90</file>
                 </tool>
             </inputs>
         </file>
@@ -870,7 +873,7 @@
             <inputs>
                 <tool>
                     <name>XLINK</name>
-                    <file> 60 79 87 117 121 147 28 95 126 136 26 30 125 104 131 115 99 67 146 122 120 148 45 152 50 31 56 49</file>
+                    <file> 60 79 87 117 161 121 167 147 28 95 126 136 26 30 125 104 131 115 99 67 146 122 120 148 45 152 50 31 56 49</file>
                 </tool>
             </inputs>
         </file>
@@ -894,21 +897,48 @@
             </inputs>
         </file>
         <file>
-            <name>$PROJ_DIR$\blueTooth.c</name>
+            <name>$PROJ_DIR$\communicateManager.c</name>
             <outputs>
                 <tool>
+                    <name>ICC430</name>
+                    <file> 167</file>
+                </tool>
+                <tool>
                     <name>BICOMP</name>
-                    <file> 164</file>
+                    <file> 166</file>
                 </tool>
             </outputs>
             <inputs>
                 <tool>
                     <name>ICC430</name>
-                    <file> 53 75 70 33 130 91 88 124 97 90 73 40 138 84 61 162 3 34 139 42 83 161 44</file>
+                    <file> 162 83 91 88 124 97 90 73 40 138</file>
                 </tool>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 70 161 139 130 91 124 40 88 3 83 138 162 34 42 44 75 61 33 53 84 73 97 90</file>
+                    <file> 138 88 91 124 40 83 73 162 97 90</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\blueTooth.c</name>
+            <outputs>
+                <tool>
+                    <name>ICC430</name>
+                    <file> 161</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 165</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICC430</name>
+                    <file> 53 75 70 33 130 91 88 124 97 90 73 40 138 84 61 163 3 34 139 42 83 162 44</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 33 70 162 139 130 3 83 138 88 91 163 34 42 44 75 61 124 40 53 84 73 97 90</file>
                 </tool>
             </inputs>
         </file>

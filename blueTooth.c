@@ -329,23 +329,44 @@ BLERet BLE_BLESPPCFG()//AT+BLESPPCFG=1,1,7,1,5  配置透传
           return BLE_ERROR;
 }
 
-BLERet BLE_BLESPP()//AT+BLESPP  开启透传
+BLERet BLE_BLESP()//AT+BLESPP  开启透传
 {
+
+
 	char cmd[]={0x41,0x54,0x2B,0x42,0x4C,0x45,0x53,0x50,0x50  };
 //        char cmd[100];
 //        memset(cmd,0,100);
 //        memcpy(cmd,"AT+BLESPP",sizeof("AT+BLESPP"));
 	char result[100];
 	BLE_SendAtCmd(cmd,sizeof(cmd));
-        printf("AT SEND: %s \r\n",cmd);
+  printf("AT SEND: %s \r\n",cmd);
 	BLE_RecAt(result);
-        printf("REC:%s\r\n",result);
-        if(strstr(result,"K") != 0)
-        {
-          return BLE_SUCCESS;
-        }
-        else
-          return BLE_ERROR;
+  printf("REC:%s\r\n",result);
+  if(strstr(result,"K") != 0)
+  {
+    return BLE_SUCCESS;
+  }
+  else
+    return BLE_ERROR;
+
+}
+
+BLERet BLE_BLESPP()
+{
+  int time=0;
+  while(BLE_BLESP()!=BLE_SUCCESS)
+  {
+    time++;
+    printf( "SPP...\r\n" );
+    System_Delayms ( 1000 );
+    if(time>5)
+    {
+      printf("failed,please check system\r\n");
+      return BLE_ERROR;
+    }
+  }
+  printf( "SPP!\r\n" );
+  return BLE_SUCCESS;
 }
 
 BLERet BLE_BLESPPEND()//+++ 回车  退出透传
@@ -640,22 +661,22 @@ int BLE_MAIN()
           }
         }
         printf("REC:%s\r\n",result);
+        printf("CCCD\r\n");
         
         
-        
-        time=0;
-        while(BLE_BLESPP()!=BLE_SUCCESS)
-        {
-          time++;
-          printf( "SPP...\r\n" );
-          System_Delayms ( 1000 );
-          if(time>5)
-          {
-            printf("failed,please check system\r\n");
-            return -1;
-          }
-        }
-        printf( "SPP!\r\n" );
+        // time=0;
+        // while(BLE_BLESPP()!=BLE_SUCCESS)
+        // {
+        //   time++;
+        //   printf( "SPP...\r\n" );
+        //   System_Delayms ( 1000 );
+        //   if(time>5)
+        //   {
+        //     printf("failed,please check system\r\n");
+        //     return -1;
+        //   }
+        // }
+        // printf( "SPP!\r\n" );
         
         System_Delayms(2000);
         return 0;
@@ -668,6 +689,67 @@ int BLE_MAIN()
  * Desc     :   BLE driver
 */
 
+
+uint8_t g_u8_IS_BLE_CAN_USE = 1;
+
+// 0 success, -1 failed
+int ble_init()
+{
+  int iRet = BLE_MAIN();
+  if(iRet == 0)
+  {
+    g_u8_IS_BLE_CAN_USE = 1;
+  }
+  else
+  {
+    g_u8_IS_BLE_CAN_USE = 0;
+  }
+  
+
+  return iRet;
+}
+
+// 1 available, -1 not available
+int ble_isCanUse()
+{
+  if(g_u8_IS_BLE_CAN_USE)
+    return 1;
+  else
+  {
+    return 0;
+  }
+}
+
+// 0 success , otherwise fail
+int ble_open()
+{
+  int iRet;
+  iRet = BLE_BLESPP();
+
+
+  return iRet;
+}
+
+void ble_getMsg(char *msgRecv,int *len)
+{
+
+  SPPTX(msgRecv,len);
+}
+
+//0 success
+int ble_sendMsg(char *msgRecv,int len)
+{
+  SPPRX(msgRecv,len);
+
+  return 0;
+}
+
+int ble_close()
+{
+  return BLE_BLESPPEND();
+}
+
+
 T_CommunicateDev T_CommuteDevBLE = 
 {
     .name = "BLE",
@@ -676,35 +758,11 @@ T_CommunicateDev T_CommuteDevBLE =
     .getMsg = ble_getMsg,
     .sendMsg = ble_sendMsg,
     .close = ble_close,
+    .init = ble_init,
 };
 
-uint8_t g_u8BLE_IS_CAN_USE = 1;
-int ble_isCanUse()
+
+void BleDriverInstall()
 {
-
-  return 0;
-}
-
-int ble_open()
-{
-
-  return 0;
-}
-
-int ble_getMsg()
-{
-
-  return 0;
-}
-
-int ble_sendMsg()
-{
-
-  return 0;
-}
-
-int ble_close()
-{
-
-  return 0;
+  RegisterCommunicateDev(&T_CommuteDevBLE);
 }
