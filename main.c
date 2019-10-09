@@ -44,16 +44,28 @@ int main(void)
     
 
     /* BC95 Test */
-    //char flag = BC95_Open();
-    //if (flag == 1)
-    //{}
-    //    printf("BC95 open error \r\n");
-    //    BC95_Close();
-    //}
-    //BC95_ConfigProcess();
+    char flag = BC95_Open();
+    if (flag == 1)
+    {
+       printf("BC95 open error \r\n");
+       BC95_Close();
+    }
+    BC95_ConfigProcess();
+    int iRet = BC95_SetTimeZoneBeijing();
+    if(iRet == 1)
+    {
+        printf("Beijing Time Zone set OK \r\n");
+    }
+    while (1)
+    {
+        char year,month,date,hour,min,second;
+        BC95_QueryTime(&year,&month,&date,&hour,&min,&second);
+        printf(" %u : %u \r\n",hour,min);
+        System_Delayms(1000);
+    }
+    
 
     /* BC95 test */
-    //BC95_Test();
     /* End of BC95 test */
     
     Sampler_Open();

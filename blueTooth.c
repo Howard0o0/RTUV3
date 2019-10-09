@@ -6,12 +6,15 @@
 /******************************************/
 
 #include "msp430common.h"
-#include "bootble.h"
+#include "blueTooth.h"
 #include "uart2.h"
 #include "uart3.h"
 #include "console.h"
 #include "common.h"
 #include <string.h>
+#include <stdio.h>
+#include "communicateManager.h"
+#include <stdint.h>
 
 #define BLE_MAX_PROTOCOL_DATA_LEN 500
 #define BLE_REPEAT_TIMES 10
@@ -586,11 +589,17 @@ int BLE_MAIN()
         
         
         
-        
+        time=0;
         while(BLE_CONNECT() != BLE_SUCCESS)
         {
+          time++;
           printf( "CONNECT...\r\n" );
           System_Delayms ( 1000 );
+          if(time>30)
+          {
+            printf("failed to connect\r\n");
+            return -1;
+          }
         }
         printf( "CONNECTED!\r\n" );
         
@@ -615,14 +624,20 @@ int BLE_MAIN()
         
         
         printf("waiting CCCD\r\n");
-        //System_Delayms ( 3000 );
         char result[100];
         BLE_RecAt(result);
+        time=0;
         while(strstr(result,"+W") == 0)
         {
+          time++;
           printf("REC:%s\r\n",result);
           printf("waiting CCCD\r\n");
           BLE_RecAt(result);
+          if(time>25)
+          {
+            printf("failed to enable\r\n");
+            return -1;
+          }
         }
         printf("REC:%s\r\n",result);
         
@@ -647,3 +662,49 @@ int BLE_MAIN()
 	//System_Reset();
 }
 
+/*
+ * author   :   Howard
+ * date     :   2019/10/09
+ * Desc     :   BLE driver
+*/
+
+T_CommunicateDev T_CommuteDevBLE = 
+{
+    .name = "BLE",
+    .isCanUse = ble_isCanUse,
+    .open = ble_open,
+    .getMsg = ble_getMsg,
+    .sendMsg = ble_sendMsg,
+    .close = ble_close,
+};
+
+uint8_t g_u8BLE_IS_CAN_USE = 1;
+int ble_isCanUse()
+{
+
+  return 0;
+}
+
+int ble_open()
+{
+
+  return 0;
+}
+
+int ble_getMsg()
+{
+
+  return 0;
+}
+
+int ble_sendMsg()
+{
+
+  return 0;
+}
+
+int ble_close()
+{
+
+  return 0;
+}

@@ -1,7 +1,7 @@
 /******************************************/
 //     文件名: bootloader.h
 //      时间：2018.2.1
-//      作者：康烨
+//      作者：张衡
 //      版本：1.0
 /******************************************/
 #pragma once
@@ -52,20 +52,22 @@ typedef enum tagBLE_STATE
 
 ///////////接口
 /*  BLERet:BLE_SUCCESS   BLE_ERROR */
-void BLE_buffer_Clear();                                         //清BUFF                
 BLERet BLE_ADVSTART();                  //开启广播  
 BLERet BLE_ADVSTOP();                   //结束广播                                          
 BLERet BLE_CONNECT();             //判断蓝牙是否连接
 int BLE_MAIN();                 //初始化蓝牙-》广播-》等待连接-》开启透传
-BLERet BLE_RST();                       //重启蓝牙
 BLERet BLE_SLEEP();                     //蓝牙休眠  可直接用BLE_MAIN初始化                         
+BLERet BLE_RST();                       //重启蓝牙
 BLERet BLE_BLESPP();                    //透传
 BLERet BLE_BLESPPEND();                   //结束透传
 
 void SPPRX(char * result,int len);           //手机收
 void SPPTX(char * result,int * len);           //手机发
+
+
 ////////////底层
 
+void BLE_buffer_Clear();                                         //清BUFF                
 void SPPRX_test();           //手机收
 void SPPTX_test();           //手机发
 

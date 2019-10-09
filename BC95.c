@@ -229,6 +229,130 @@ void BC95_QueryState()
 	}
 }
 
+void BC95_QueryTime(char *year,char *month,char *date,char *hour,char *min,char *second)
+{
+/* char *year,char *month,char *date,char *hour,char *min,char *second */
+	int _repeat = 0;
+	int _dataLen = 0;
+	char _data[UART1_MAXBUFFLEN] = {0};
+	int rcvFlag = 0;
+
+	BC95_Send("AT+CCLK?");
+	Console_WriteStringln("AT+CCLK?");
+
+	while (_repeat < BC95_REPEAT_TIMES)
+	{
+		if (UART0_RecvLineTry(_data, UART1_MAXBUFFLEN, &_dataLen) == 0) //有数据
+		{
+			Console_WriteStringln(_data);
+			if(strstr(_data,"+CCLK:") != NULL)
+			{
+				rcvFlag = 1;
+			}
+			break ;
+		}
+		_repeat++;
+		System_Delayms(50);
+	}
+
+	/* +CCLK: */
+	if(rcvFlag)
+	{
+		char *substr = "+CCLK:";
+		char *pcAtResp = strstr(_data, substr);
+		int offset = 6;
+		char year1,year2,month1,month2,date1,date2,hour1,hour2,min1,min2,sec1,sec2;
+		year1 = *(pcAtResp+offset);
+		offset++;
+		year2 = *(pcAtResp+offset);
+		offset++;
+		offset++;
+		month1 = *(pcAtResp+offset);
+		offset++;
+		month2 = *(pcAtResp+offset);
+		offset++;
+		offset++;
+		date1 = *(pcAtResp+offset);
+		offset++;
+		date2 = *(pcAtResp+offset);
+		offset++;
+		offset++;
+		hour1 = *(pcAtResp+offset);
+		offset++;
+		hour2 = *(pcAtResp+offset);
+		offset++;
+		offset++;
+		min1 = *(pcAtResp+offset);
+		offset++;
+		min2 = *(pcAtResp+offset);
+		offset++;
+		offset++;
+		sec1 = *(pcAtResp+offset);
+		offset++;
+		sec2 = *(pcAtResp+offset);
+
+	/* char *year,char *month,char *date,char *hour,char *min,char *second */
+		*year = (year1-48)*10 + (year2-48);
+		*month = (month1-48)*10 + (month2-48);
+		*date = (date1-48)*10 + (date2-48);
+		*hour =( (hour1-48)*10 + (hour2-48)) + 8;
+		*min = (min1-48)*10 + (min2-48);
+		*second = (sec1-48)*10 + (sec2-48);
+	}
+
+}
+
+
+int BC95_SetTimeZoneBeijing()
+{
+/* char *year,char *month,char *date,char *hour,char *min,char *second */
+	int _repeat = 0;
+	int _dataLen = 0;
+	char _data[UART1_MAXBUFFLEN] = {0};
+
+	BC95_Send("AT+CTZR=2");
+	Console_WriteStringln("AT+CTZR=2");
+
+	while (_repeat < BC95_REPEAT_TIMES)
+	{
+		if (UART0_RecvLineTry(_data, UART1_MAXBUFFLEN, &_dataLen) == 0) //有数据
+		{
+			Console_WriteStringln(_data);
+
+			break;
+		}
+		_repeat++;
+		System_Delayms(50);
+
+		
+		
+	}
+
+	BC95_Send("AT+CTZE:+8,0");
+	Console_WriteStringln("AT+CTZE:+8,0");
+
+	while (_repeat < BC95_REPEAT_TIMES)
+	{
+		if (UART0_RecvLineTry(_data, UART1_MAXBUFFLEN, &_dataLen) == 0) //有数据
+		{
+			Console_WriteStringln(_data);
+
+			if (strstr(_data, "OK"))
+			{
+				return 1;
+			}
+			break;
+		}
+		_repeat++;
+		System_Delayms(50);
+
+		
+		
+	}
+
+	return -1;
+}
+
 /********
 Function：设置扰码功能
 ********/

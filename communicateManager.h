@@ -10,9 +10,10 @@ typedef struct communicateDev
 {
     char *name;
     int (*isCanUse)(void);
-    int (*init)(void);
+    int (*open)(void);
     int (*getMsg)(char *msgRecv);
     int (*sendMsg)(char *msgSend);
+    int (*close)(void);
     struct communicateDev *ptNext;
 }T_CommunicateDev,*PT_CommunicateDev;
 
