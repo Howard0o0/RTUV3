@@ -1,0 +1,649 @@
+/******************************************/
+//     文件名: bootloader.c
+//      时间：2018.2.1
+//      作者：康烨
+//      版本：1.0
+/******************************************/
+
+#include "msp430common.h"
+#include "bootble.h"
+#include "uart2.h"
+#include "uart3.h"
+#include "console.h"
+#include "common.h"
+#include <string.h>
+
+#define BLE_MAX_PROTOCOL_DATA_LEN 500
+#define BLE_REPEAT_TIMES 10
+
+void BLE_buffer_Clear()
+{
+	UART2_ClearBuffer();
+}
+
+void SPPRX_test()
+{
+      char result[100]={0};
+      int time=0;
+      int len=0;
+      while(UART3_RecvLineWait(result,100,&len)<0)
+      {
+//          if(time>40)//12s
+//            return;
+//          time++;
+      }
+      
+      printf("cmd:");
+      for(int i=0;i<100;i++)
+        printf("%c",result[i]);
+      printf("\r\n");
+      
+      
+      BLE_SendAtCmd(result,len);
+      
+}
+
+void SPPTX_test()
+{
+      char result[100]={0};
+      int time=0;
+      int len=0;
+      while(UART2_RecvLineWait(result,100,&len)<0)
+      {
+//          if(time>40)//12s
+//            return;
+//          time++;
+      }
+      
+      printf("cmd:");
+      for(int i=0;i<100;i++)
+        printf("%c",result[i]);
+      printf("\r\n");
+      
+      
+      //printf(result);
+      
+}
+
+
+void SPPRX(char * result,int len)
+{
+//      char result[100]={0};
+//      int time=0;
+//      int len=0;
+//      while(UART3_RecvLineWait(result,100,&len)<0)
+//      {
+////          if(time>40)//12s
+////            return;
+////          time++;
+//      }
+//      
+      printf("cmd:");
+      for(int i=0;i<len;i++)
+        printf("%c",result[i]);
+      printf("\r\n");
+      
+      
+      BLE_SendAtCmd(result,len);
+      
+}
+
+void SPPTX(char * result,int * len)
+{
+//      char result[100]={0};
+//      int time=0;
+//      int len=0;
+      while(UART2_RecvLineWait(result,100,len)<0)
+      {
+//          if(time>40)//12s
+//            return;
+//          time++;
+      }
+      
+      printf("cmd:");
+      for(int i=0;i<*len;i++)
+        printf("%c",result[i]);
+      printf("\r\n");
+      
+      
+      //printf(result);
+      
+}
+
+//void BLE_SendAtCmd(char *atCmd,int cmdLen)
+//{
+//  atCmd[cmdLen] = 0x0D;
+//  atCmd[cmdLen+1] = 0x0A;
+////  atCmd[cmdLen+2] = 0;
+//  UART2_Send(atCmd,cmdLen+2,0);  
+//}
+
+
+void BLE_SendAtCmd(char *atCmd,int cmdLen)
+{
+  char end[]={0x0D,0x0A};
+  //atCmd[cmdLen] = 0;
+  UART2_Send(atCmd,cmdLen,0); 
+  UART2_Send(end,sizeof(end),0);
+}
+
+
+void BLE_RecAt(char *result)
+{
+          int _repeat = 0;
+          int len;
+          while ( _repeat < BLE_REPEAT_TIMES )
+          {
+            if(BLE_RecvLineTry ( result,100,&len ) == 0) // rcv AT response
+            {
+//              printf("AT RCV: %s \r\n",result);
+//              printf("%s \r\n",result);
+              break;
+            }
+              
+            _repeat++;
+          }
+}
+
+BLERet BLE_ATE()        //回显
+{
+          char cmd[] = {0x41,0x54,0x45,0x30 };
+          char result[100];
+          BLE_SendAtCmd(cmd,sizeof(cmd));
+          printf("AT SEND: %s \r\n",cmd);
+          BLE_RecAt(result);
+          printf("REC:%s\r\n",result);
+          if(strstr(result,"K") !=0)
+          {
+            return BLE_SUCCESS;
+          }
+          else 
+            return BLE_ERROR;
+          System_Delayms(1000);
+}
+
+BLERet ATTEST()  // AT
+{
+      
+      char cmd[] = {0x41 ,0x54  };
+      char result[100];    
+    
+      /* test at:AT */
+      for(int i=0;i<3;i++)
+      {
+          BLE_SendAtCmd(cmd,sizeof(cmd));
+          printf("AT SEND: %s \r\n",cmd);
+          BLE_RecAt(result);
+          printf("REC:%s\r\n",result);          
+          System_Delayms(2000);
+      }
+      if(strstr(result,"K") != 0)
+      {
+        return BLE_SUCCESS;
+      }
+      else
+      {
+        return BLE_ERROR;
+      }
+}
+
+
+BLERet BLE_SetName ( void )//    AT+BLENAME : ESPRESSIF
+{
+  
+        char cmd[]={0x41,0x54,0x2B,0x42,0x4C,0x45,0x41,0x44,0x56,0x44,0x41,0x54,0x41,0x3D,0x22,0x30,0x32,0x30,0x31,0x30,0x36,0x30,0x34,0x30,0x39,0x35,0x32,0x35,0x34,0x35,0x35,0x30,0x33,0x30,0x33,0x30,0x32,0x41,0x30,0x22};
+        char end[]={0x0D,0x0A};
+//        char cmd[100];
+//        memset(cmd,0,100);
+//        memcpy(cmd,"AT+BLEADVDATA=\"0201060A09457370726573736966030302A0\"",sizeof("AT+BLEADVDATA=\"0201060A09457370726573736966030302A0\""));
+        
+	char result[100];
+        
+//        UART2_Send(cmd,sizeof(cmd),0);
+//        UART2_Send(end,sizeof(end),0);
+         
+	BLE_SendAtCmd(cmd,sizeof(cmd));
+        
+        printf("AT SEND: %s \r\n",cmd);
+	BLE_RecAt(result);
+        printf("REC:%s\r\n",result);
+        if(strstr(result,"K") != 0)
+        {
+          return BLE_SUCCESS;
+        }
+        else
+        {
+          return BLE_ERROR;
+        }
+          
+}
+
+BLERet BLE_SERVER()  // //AT+BLEINIT=2  初始化为服务端
+{
+        char cmd[]={0x41,0x54,0x2B,0x42,0x4C,0x45,0x49,0x4E,0x49,0x54,0x3D,0x32 };
+        
+//        char cmd[num];
+//        memset(cmd,0,num);
+//        memcpy(cmd,"AT+BLEINIT=2",sizeof("AT+BLEINIT=2"));
+               
+               
+	char result[100];
+	BLE_SendAtCmd(cmd,sizeof(cmd));
+        printf("AT SEND: %s \r\n",cmd);
+	BLE_RecAt(result);
+        printf("REC:%s\r\n",result);
+        if(strstr(result,"K") != 0)
+        {
+          return BLE_SUCCESS;
+        }
+        else
+          return BLE_ERROR;
+}
+
+
+
+BLERet BLE_GATTSSRVCRE()// AT+BLEGATTSSRVCRE GATTS 创建服务
+{
+        char cmd[]={0x41,0x54,0x2B,0x42,0x4C,0x45,0x47,0x41,0x54,0x54,0x53,0x53,0x52,0x56,0x43,0x52,0x45 };
+        
+//        char cmd[100];
+//        memset(cmd,0,100);
+//        memcpy(cmd,"AT+BLEGATTSSRVCRE",sizeof("AT+BLEGATTSSRVCRE"));
+        
+	char result[100];
+	BLE_SendAtCmd(cmd,sizeof(cmd));
+        printf("AT SEND: %s \r\n",cmd);
+	BLE_RecAt(result);
+        printf("REC:%s\r\n",result);
+        if(strstr(result,"K") != 0)
+        {
+          return BLE_SUCCESS;
+        }
+        else
+          return BLE_ERROR;
+}
+
+
+BLERet BLE_GATTSSRVSTART() //AT+BLEGATTSSRVSTART—GATTS 开启服务
+{
+	char cmd[]={0x41,0x54,0x2B,0x42,0x4C,0x45,0x47,0x41,0x54,0x54,0x53,0x53,0x52,0x56,0x53,0x54,0x41,0x52,0x54  };
+//        char cmd[100];
+//        memset(cmd,0,100);
+//        memcpy(cmd,"AT+BLEGATTSSRVSTART",sizeof("AT+BLEGATTSSRVSTART"));
+  
+	char result[100];
+	BLE_SendAtCmd(cmd,sizeof(cmd));
+        printf("AT SEND: %s \r\n",cmd);
+	BLE_RecAt(result);
+        printf("REC:%s\r\n",result);
+        if(strstr(result,"K") != 0)
+        {
+          return BLE_SUCCESS;
+        }
+        else
+          return BLE_ERROR;
+}
+
+
+BLERet BLE_ADVSTART()  //AT+BLEADVSTART 开始 BLE 广播
+{
+	char cmd[]={0x41,0x54,0x2B,0x42,0x4C,0x45,0x41,0x44,0x56,0x53,0x54,0x41,0x52,0x54  };
+//        char cmd[100];
+//        memset(cmd,0,100);
+//        memcpy(cmd,"AT+BLEADVSTART",sizeof("AT+BLEADVSTART"));
+        
+	char result[100];
+	BLE_SendAtCmd(cmd,sizeof(cmd));
+        printf("AT SEND: %s \r\n",cmd);
+	BLE_RecAt(result);
+        printf("REC:%s\r\n",result);
+        if(strstr(result,"K") != 0)
+        {
+          return BLE_SUCCESS;
+        }
+        else
+          return BLE_ERROR;
+}
+
+
+BLERet BLE_BLESPPCFG()//AT+BLESPPCFG=1,1,7,1,5  配置透传
+{
+	char cmd[]={0x41,0x54,0x2B,0x42,0x4C,0x45,0x53,0x50,0x50,0x43,0x46,0x47,0x3D,0x31,0x2C,0x31,0x2C,0x37,0x2C,0x31,0x2C,0x35  };
+	
+//        char cmd[100];
+//        memset(cmd,0,100);
+//        memcpy(cmd,"AT+BLESPPCFG=1,1,7,1,5",sizeof("AT+BLESPPCFG=1,1,7,1,5"));
+        char result[100];
+	BLE_SendAtCmd(cmd,sizeof(cmd));
+        printf("AT SEND: %s \r\n",cmd);
+	BLE_RecAt(result);
+        printf("REC:%s\r\n",result);
+        if(strstr(result,"K") != 0)
+        {
+          return BLE_SUCCESS;
+        }
+        else
+          return BLE_ERROR;
+}
+
+BLERet BLE_BLESPP()//AT+BLESPP  开启透传
+{
+	char cmd[]={0x41,0x54,0x2B,0x42,0x4C,0x45,0x53,0x50,0x50  };
+//        char cmd[100];
+//        memset(cmd,0,100);
+//        memcpy(cmd,"AT+BLESPP",sizeof("AT+BLESPP"));
+	char result[100];
+	BLE_SendAtCmd(cmd,sizeof(cmd));
+        printf("AT SEND: %s \r\n",cmd);
+	BLE_RecAt(result);
+        printf("REC:%s\r\n",result);
+        if(strstr(result,"K") != 0)
+        {
+          return BLE_SUCCESS;
+        }
+        else
+          return BLE_ERROR;
+}
+
+BLERet BLE_BLESPPEND()//+++ 回车  退出透传
+{
+	char cmd[]={0x2B,0x2B,0x2B};
+        char end[]={0x41 ,0x54,0x0D ,0x0A};
+//        char end1[]={};
+        char cmd1[]={0x31,0x32,0x33};
+        BLE_buffer_Clear();
+//        char cmd[100];
+//        memset(cmd,0,100);
+//        memcpy(cmd,"+++ \r\n",sizeof("+++ \r\n"));
+	char result[100];
+       
+        UART2_Send(cmd,sizeof(cmd),0);
+        BLE_RecAt(result);
+        printf("REC:%s\r\n",result);
+        System_Delayms(2000);
+        BLERet ret;
+        ret=ATTEST();
+        return ret;
+        //UART2_Send(cmd1,sizeof(cmd1),0);
+        //UART2_Send(end1,sizeof(end1),0);
+}
+
+BLERet BLE_INIT()       //初始化蓝牙
+{
+    P10DIR |= BIT1;         //MCU-P101=0
+    P10OUT &= ~BIT1;
+    P10DIR |= BIT2;         //MCU-P102=0
+    P10OUT &= ~BIT2;
+    P9DIR |= BIT6;
+    P9OUT |= BIT6;
+    UART2_Open(1);
+    UART3_Send("uart open",9,1);
+    
+    printf("wait for 10s ...\r\n");
+    System_Delayms(3000);
+    
+    BLERet ret = BLE_ERROR;
+      
+    BLE_BLESPPEND();
+    System_Delayms ( 1000 );
+    
+    
+    ATTEST();
+    for(int i=0;i<3;i++)
+    {
+      ret=BLE_RST(); 
+      System_Delayms ( 1000 );
+      ret=BLE_ATE();
+      System_Delayms ( 1000 );
+      ret=ATTEST();
+      System_Delayms ( 1000 );
+      if(ret==BLE_SUCCESS)
+        return BLE_SUCCESS;
+    }
+    return BLE_ERROR;
+}
+
+
+
+BLERet BLE_Open()
+{
+      BLERet ret = BLE_ERROR;
+      System_Delayms ( 2000 );
+      
+      ret = BLE_SERVER();
+      System_Delayms ( 1000 );
+      if(ret == BLE_ERROR)
+        return ret;
+      
+      ret = BLE_SetName(); 
+      System_Delayms ( 1000 );
+      if(ret == BLE_ERROR)
+        return ret;
+      
+      ret = BLE_GATTSSRVCRE();
+      System_Delayms ( 1000 );
+      if(ret == BLE_ERROR)
+        return ret;
+      
+      ret = BLE_GATTSSRVSTART();
+      System_Delayms ( 1000 );
+      //if(ret == BLE_ERROR)
+        //return ret;
+      
+      ret = BLE_ADVSTART();
+      System_Delayms ( 1000 );
+      if(ret == BLE_ERROR)
+        return ret;
+
+      return ret;
+}
+
+
+
+BLERet BLE_CONNECT()    //判断是否连接
+{
+	char cmd[]={0x41,0x54,0x2B,0x42,0x4C,0x45,0x43,0x4F,0x4E,0x4E,0x3F };
+//        char cmd[100];
+//        memset(cmd,0,100);
+//        memcpy(cmd,"AT+BLECONN?",sizeof("AT+BLECONN?"));
+	char result[100];
+        for(int i=0;i<3;i++)
+        {
+          BLE_SendAtCmd(cmd,sizeof(cmd));
+          printf("AT SEND: %s \r\n",cmd);
+          BLE_RecAt(result);
+          printf("REC:%s\r\n",result);
+          if(strstr(result,"N:0") != 0)
+          {
+            return BLE_SUCCESS;
+          }
+        }
+	return BLE_ERROR;
+}
+
+BLERet BLE_ADVSTOP()    //结束广播
+{
+	char cmd[]={0x41,0x54,0x2B,0x42,0x4C,0x45,0x41,0x44,0x56,0x53,0x54,0x4F,0x50 };
+//        char cmd[100];
+//        memset(cmd,0,100);
+//        memcpy(cmd,"AT+BLEADVSTOP",sizeof("AT+BLEADVSTOP"));
+	char result[100];
+	BLE_SendAtCmd(cmd,sizeof(cmd));
+        printf("AT SEND: %s \r\n",cmd);
+	BLE_RecAt(result);
+        printf("REC:%s\r\n",result);
+        if(strstr(result,"K") != 0)
+        {
+          return BLE_SUCCESS;
+        }
+        else
+          return BLE_ERROR;
+}
+
+
+BLERet BLE_RST()    //重启蓝牙
+{
+        char cmd[]={0x41,0x54,0x2B,0x52,0x53,0x54  };
+//        char cmd[10];
+//        memset(cmd,0,10);
+//        memcpy(cmd,"AT+RST",6);
+        
+      
+	
+	char result[100];
+	BLE_SendAtCmd(cmd,sizeof(cmd));
+        printf("AT SEND: %s \r\n",cmd);
+	BLE_RecAt(result);
+        printf("REC:%s\r\n",result);
+        if(strstr(result,"ea") != 0)
+        {
+          return BLE_SUCCESS;
+        }
+        else
+          return BLE_ERROR;
+
+}
+
+BLERet BLE_SLEEP()      //休眠
+{
+  
+          char cmd[]={0x41,0x54,0x2B,0x43,0x57,0x4D,0x4F,0x44,0x45,0x3D,0x30  };
+//        char cmd[20];
+//        memset(cmd,0,20);
+//        memcpy(cmd,"AT+CWMODE=0",11);
+        
+      
+	
+	char result[100];
+	BLE_SendAtCmd(cmd,sizeof(cmd));
+        printf("AT SEND: %s \r\n",cmd);
+	BLE_RecAt(result);
+        printf("REC:%s\r\n",result);
+        if(strstr(result,"K") != 0)
+        {
+        }
+        else
+          return BLE_ERROR;
+
+	char cmd2[]={0x41,0x54,0x2B,0x42,0x4C,0x45,0x49,0x4E,0x49,0x54,0x3D,0x30 };
+//        memset(cmd,0,20);
+//        memcpy(cmd,"AT+BLEINIT=0",12);
+        
+        BLE_SendAtCmd(cmd2,sizeof(cmd2));
+        printf("AT SEND: %s \r\n",cmd2);
+	BLE_RecAt(result);
+        printf("REC:%s\r\n",result);
+        if(strstr(result,"OK") != 0)
+        {
+          return BLE_SUCCESS;
+        }
+        else
+          return BLE_ERROR;
+	
+}
+
+
+void BLE_Close()
+{
+	UART2_Close();
+}
+
+
+int BLE_RecvLineTry ( char* _dest,const int _max, int* _pNum )
+{
+	if ( 0 == UART2_RecvLineWait ( _dest, _max,  _pNum ) )
+	{
+                _dest[*_pNum] = 0;  // end symbol
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
+}
+
+
+int BLE_MAIN()
+{
+        if(BLE_INIT()!=BLE_SUCCESS)
+          return -1;
+        
+        
+        
+        int time=0;
+        while(BLE_Open() != BLE_SUCCESS)
+        {
+          printf( "open ble failed ,reset system\r\n" );
+          time++;
+          System_Delayms ( 1000 );
+          if(time>5)
+          {
+            printf("failed,please check system\r\n");
+            return -1;
+          }
+        }         
+        printf( "BLE_Init OK!\r\n" );
+        
+        
+        
+        
+        while(BLE_CONNECT() != BLE_SUCCESS)
+        {
+          printf( "CONNECT...\r\n" );
+          System_Delayms ( 1000 );
+        }
+        printf( "CONNECTED!\r\n" );
+        
+        
+        
+        
+        time=0;
+        while(BLE_BLESPPCFG() != BLE_SUCCESS)
+        {
+          time++;
+          printf( "CONFIG...\r\n" );
+          System_Delayms ( 1000 );
+          if(time>5)
+          {
+            printf("failed,please check system\r\n");
+            return -1;
+          }
+        }
+        printf( "CONFIG!\r\n" );
+        
+        
+        
+        
+        printf("waiting CCCD\r\n");
+        //System_Delayms ( 3000 );
+        char result[100];
+        BLE_RecAt(result);
+        while(strstr(result,"+W") == 0)
+        {
+          printf("REC:%s\r\n",result);
+          printf("waiting CCCD\r\n");
+          BLE_RecAt(result);
+        }
+        printf("REC:%s\r\n",result);
+        
+        
+        
+        time=0;
+        while(BLE_BLESPP()!=BLE_SUCCESS)
+        {
+          time++;
+          printf( "SPP...\r\n" );
+          System_Delayms ( 1000 );
+          if(time>5)
+          {
+            printf("failed,please check system\r\n");
+            return -1;
+          }
+        }
+        printf( "SPP!\r\n" );
+        
+        System_Delayms(2000);
+        return 0;
+	//System_Reset();
+}
+

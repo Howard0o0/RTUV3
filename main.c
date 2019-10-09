@@ -41,10 +41,12 @@ int main(void)
 
     Main_Init();
 
+    
+
     /* BC95 Test */
     //char flag = BC95_Open();
     //if (flag == 1)
-    //{
+    //{}
     //    printf("BC95 open error \r\n");
     //    BC95_Close();
     //}

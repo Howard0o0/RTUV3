@@ -2163,6 +2163,12 @@
         <name>$PROJ_DIR$\BC95.h</name>
     </file>
     <file>
+        <name>$PROJ_DIR$\bootble.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\bootble.h</name>
+    </file>
+    <file>
         <name>$PROJ_DIR$\common.c</name>
     </file>
     <file>
@@ -2221,6 +2227,12 @@
     </file>
     <file>
         <name>$PROJ_DIR$\uart1.h</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\uart2.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\uart2.h</name>
     </file>
     <file>
         <name>$PROJ_DIR$\uart3.c</name>
