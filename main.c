@@ -24,7 +24,7 @@
 #include "rom.h"
 #include "BC95.h"
 #include "blueTooth.h"
-#include "communicateManager.h"
+#include "ioDev.h"
 
 int IsDebug = 0;
 
@@ -39,16 +39,12 @@ int main(void)
     
     TraceOpen();
 
-    TraceMsg("Device Open !",1);
-
-    Main_Init();
-
     /* ble test */
     BleDriverInstall();
     printf("BLE driver installed \r\n");
     
 
-    PT_CommunicateDev  ptDevBle =  getCommunicateDev("BLE");
+    PT_IODev  ptDevBle =  getIODev();
     if(ptDevBle == NULL)
     {
         printf("BLE not registerd !\r\n");
@@ -57,24 +53,38 @@ int main(void)
 
     printf("BLE is waiting for matched in 30s ...\r\n");
     ptDevBle->init();
-    while (1)
-    {
+    
+    // while (1)
+    // {
         
-        if(ptDevBle->isCanUse())
-        {
-            if( ptDevBle->open() != 0)
-            {
-                printf("ble open failed! \r\n");
-                continue;
-            }
-            ptDevBle->sendMsg("hahaha",6);
-            ptDevBle->close();
-        }
+    //     if(ptDevBle->isCanUse())
+    //     {
+    //         if( ptDevBle->open() != 0)
+    //         {
+    //             printf("ble open failed! \r\n");
+    //             continue;
+    //         }
+    //         char acBleRcvBuf[200] = {0};
+    //         int iLen = 0;
+    //         ptDevBle->sendMsg("waiting config ... ",sizeof("waiting config ... "));
+    //         printf("waing msg from phone \r\n");
+    //         ptDevBle->getMsg(acBleRcvBuf,&iLen);
+    //         if(iLen > 0)
+    //         {
+    //             printf("rcv from phone : %s \r\n",acBleRcvBuf);
+    //         }
+    //         ptDevBle->close();
+    //     }
 
-        System_Delayms(1000);
-    }
-
+    //     System_Delayms(1000);
+    // }
     /* End of BLE test */
+
+
+    TraceMsg("Device Open !",1);
+
+    Main_Init();
+
     
 
     /* BC95 Test */

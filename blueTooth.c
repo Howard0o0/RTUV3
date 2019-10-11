@@ -13,7 +13,7 @@
 #include "common.h"
 #include <string.h>
 #include <stdio.h>
-#include "communicateManager.h"
+#include "ioDev.h"
 #include <stdint.h>
 
 #define BLE_MAX_PROTOCOL_DATA_LEN 500
@@ -53,9 +53,9 @@ void SPPTX_test()
       int len=0;
       while(UART2_RecvLineWait(result,100,&len)<0)
       {
-//          if(time>40)//12s
-//            return;
-//          time++;
+         if(time>100)//12s
+           return;
+         time++;
       }
       
       printf("cmd:");
@@ -87,20 +87,21 @@ void SPPRX(char * result,int len)
       printf("\r\n");
       
       
-      BLE_SendAtCmd(result,len);
+      BLE_SendMsg(result,len);
       
 }
 
 void SPPTX(char * result,int * len)
 {
 //      char result[100]={0};
-//      int time=0;
+     int time=0;
 //      int len=0;
+      printf("3s\r\n");
       while(UART2_RecvLineWait(result,100,len)<0)
       {
-//          if(time>40)//12s
-//            return;
-//          time++;
+         if(time>10)//12s
+           return;
+         time++;
       }
       
       printf("cmd:");
@@ -130,6 +131,14 @@ void BLE_SendAtCmd(char *atCmd,int cmdLen)
   UART2_Send(end,sizeof(end),0);
 }
 
+
+void BLE_SendMsg(char *atCmd,int cmdLen)
+{
+  char end[]={0x0D,0x0A};
+  //atCmd[cmdLen] = 0;
+  UART2_Send(atCmd,cmdLen,0); 
+  // UART2_Send(end,sizeof(end),0);
+}
 
 void BLE_RecAt(char *result)
 {
@@ -162,7 +171,7 @@ BLERet BLE_ATE()        //回显
           }
           else 
             return BLE_ERROR;
-          System_Delayms(1000);
+          // System_Delayms(500);
 }
 
 BLERet ATTEST()  // AT
@@ -178,7 +187,7 @@ BLERet ATTEST()  // AT
           printf("AT SEND: %s \r\n",cmd);
           BLE_RecAt(result);
           printf("REC:%s\r\n",result);          
-          System_Delayms(2000);
+          System_Delayms(500);
       }
       if(strstr(result,"K") != 0)
       {
@@ -347,7 +356,14 @@ BLERet BLE_BLESP()//AT+BLESPP  开启透传
     return BLE_SUCCESS;
   }
   else
-    return BLE_ERROR;
+  {
+    BLE_SendAtCmd(" ",1);
+    BLE_RecAt(result);
+    if(strstr(result,"RR") != 0)
+      return BLE_ERROR;
+    else 
+      return BLE_SUCCESS;
+  }
 
 }
 
@@ -358,7 +374,7 @@ BLERet BLE_BLESPP()
   {
     time++;
     printf( "SPP...\r\n" );
-    System_Delayms ( 1000 );
+    System_Delayms ( 500 );
     if(time>5)
     {
       printf("failed,please check system\r\n");
@@ -380,11 +396,11 @@ BLERet BLE_BLESPPEND()//+++ 回车  退出透传
 //        memset(cmd,0,100);
 //        memcpy(cmd,"+++ \r\n",sizeof("+++ \r\n"));
 	char result[100];
-       
+       System_Delayms(2000);
         UART2_Send(cmd,sizeof(cmd),0);
         BLE_RecAt(result);
         printf("REC:%s\r\n",result);
-        System_Delayms(2000);
+        System_Delayms(1000);
         BLERet ret;
         ret=ATTEST();
         return ret;
@@ -404,15 +420,14 @@ BLERet BLE_INIT()       //初始化蓝牙
     UART3_Send("uart open",9,1);
     
     printf("wait for 10s ...\r\n");
-    System_Delayms(3000);
+    System_Delayms(1000);
     
     BLERet ret = BLE_ERROR;
       
     BLE_BLESPPEND();
-    System_Delayms ( 1000 );
+    // System_Delayms ( 1000 );
     
     
-    ATTEST();
     for(int i=0;i<3;i++)
     {
       ret=BLE_RST(); 
@@ -435,27 +450,27 @@ BLERet BLE_Open()
       System_Delayms ( 2000 );
       
       ret = BLE_SERVER();
-      System_Delayms ( 1000 );
+      System_Delayms ( 500 );
       if(ret == BLE_ERROR)
         return ret;
       
       ret = BLE_SetName(); 
-      System_Delayms ( 1000 );
+      System_Delayms ( 500 );
       if(ret == BLE_ERROR)
         return ret;
       
       ret = BLE_GATTSSRVCRE();
-      System_Delayms ( 1000 );
+      System_Delayms ( 500 );
       if(ret == BLE_ERROR)
         return ret;
       
       ret = BLE_GATTSSRVSTART();
-      System_Delayms ( 1000 );
+      System_Delayms ( 500 );
       //if(ret == BLE_ERROR)
         //return ret;
       
       ret = BLE_ADVSTART();
-      System_Delayms ( 1000 );
+      System_Delayms ( 500 );
       if(ret == BLE_ERROR)
         return ret;
 
@@ -599,7 +614,7 @@ int BLE_MAIN()
         {
           printf( "open ble failed ,reset system\r\n" );
           time++;
-          System_Delayms ( 1000 );
+          System_Delayms ( 500 );
           if(time>5)
           {
             printf("failed,please check system\r\n");
@@ -632,7 +647,7 @@ int BLE_MAIN()
         {
           time++;
           printf( "CONFIG...\r\n" );
-          System_Delayms ( 1000 );
+          System_Delayms ( 500 );
           if(time>5)
           {
             printf("failed,please check system\r\n");
@@ -678,7 +693,7 @@ int BLE_MAIN()
         // }
         // printf( "SPP!\r\n" );
         
-        System_Delayms(2000);
+        // System_Delayms(2000);
         return 0;
 	//System_Reset();
 }
@@ -688,9 +703,25 @@ int BLE_MAIN()
  * date     :   2019/10/09
  * Desc     :   BLE driver
 */
+int ble_init();
+int ble_isCanUse();
+int ble_open();
+void ble_getMsg(char *msgRecv,int *len);
+int ble_sendMsg(char *msgRecv,int len);
+int ble_close();
 
+T_IODev T_CommuteDevBLE = 
+{
+    .name = "BLE",
+    .isCanUseFlag = 0,
+    .isCanUse = ble_isCanUse,
+    .open = ble_open,
+    .getMsg = ble_getMsg,
+    .sendMsg = ble_sendMsg,
+    .close = ble_close,
+    .init = ble_init,
+};
 
-uint8_t g_u8_IS_BLE_CAN_USE = 1;
 
 // 0 success, -1 failed
 int ble_init()
@@ -698,11 +729,11 @@ int ble_init()
   int iRet = BLE_MAIN();
   if(iRet == 0)
   {
-    g_u8_IS_BLE_CAN_USE = 1;
+    T_CommuteDevBLE.isCanUseFlag = 1;
   }
   else
   {
-    g_u8_IS_BLE_CAN_USE = 0;
+    T_CommuteDevBLE.isCanUseFlag = 0;
   }
   
 
@@ -712,12 +743,17 @@ int ble_init()
 // 1 available, -1 not available
 int ble_isCanUse()
 {
-  if(g_u8_IS_BLE_CAN_USE)
+  if( BLE_CONNECT() == BLE_SUCCESS )
+  {
+    T_CommuteDevBLE.isCanUseFlag = 1;
     return 1;
+  }
   else
   {
+    T_CommuteDevBLE.isCanUseFlag = 0;
     return 0;
   }
+
 }
 
 // 0 success , otherwise fail
@@ -750,19 +786,10 @@ int ble_close()
 }
 
 
-T_CommunicateDev T_CommuteDevBLE = 
-{
-    .name = "BLE",
-    .isCanUse = ble_isCanUse,
-    .open = ble_open,
-    .getMsg = ble_getMsg,
-    .sendMsg = ble_sendMsg,
-    .close = ble_close,
-    .init = ble_init,
-};
+
 
 
 void BleDriverInstall()
 {
-  RegisterCommunicateDev(&T_CommuteDevBLE);
+  RegisterIODev(&T_CommuteDevBLE);
 }

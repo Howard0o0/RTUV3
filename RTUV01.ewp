@@ -2314,9 +2314,6 @@
         <name>$PROJ_DIR$\common.c</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\communicateManager.c</name>
-    </file>
-    <file>
         <name>$PROJ_DIR$\Console.c</name>
     </file>
     <file>
@@ -2336,6 +2333,9 @@
     </file>
     <file>
         <name>$PROJ_DIR$\hydrologytask.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\ioDev.c</name>
     </file>
     <file>
         <name>$PROJ_DIR$\led.c</name>

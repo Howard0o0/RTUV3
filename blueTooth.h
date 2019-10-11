@@ -72,6 +72,8 @@ void BLE_buffer_Clear();                                         //清BUFF
 void SPPRX_test();           //手机收
 void SPPTX_test();           //手机发
 
+
+void BLE_SendMsg(char *atCmd,int cmdLen);
 BLERet BLE_BLESP();
 BLERet ATTEST();
 void BLE_RecAt(char *result);      //RTU接受蓝牙                                    

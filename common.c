@@ -16,12 +16,15 @@
 #include "Console.h"
 #include "wifi_config.h"
 #include "led.h"
+#include "ioDev.h"
 
 char switcher, anahigh, analow, pulsehigh, pulsemedium, pulselow, vthigh, vtlow, tthex;
 int trace_open = 0;
 static int s_clock = 0;       //用来指示当前频率
 static unsigned int _int = 0; //中断禁用DownInt() 的层数static unsigned int s_reset_pin =0;
 static unsigned int s_reset_pin = 0;
+
+
 
 void TraceOpen()
 { //调试打开
@@ -33,6 +36,19 @@ void TraceOpen()
   {
     Console_Close(); //纯粹为了保险,串口开着会浪费很多电
   }
+}
+
+int  strMsgLen(char *str)
+{
+  int len = 0;
+  while (str != NULL)
+  {
+    len++;
+    str++;
+  }
+  
+  return  len;
+  
 }
 
 void TraceFunctionLine(char const *_funcname, int _linename)
@@ -70,6 +86,8 @@ void TraceMsgFuncLine(char *_str, int _ln, char const *_funcname, int _linename)
       Console_WriteString(_str);
     }
   }
+
+
 }
 
 void TraceStrFuncLine(char *_str, int _len, int _ln, char const *_funcname, int _linename)
@@ -87,6 +105,8 @@ void TraceStrFuncLine(char *_str, int _len, int _ln, char const *_funcname, int 
       Console_WriteBytes(_str, _len);
     }
   }
+
+  
 }
 void TracePulseValue(char *_bytes3, int _ln)
 { //输出脉冲值

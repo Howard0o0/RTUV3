@@ -14,6 +14,7 @@
 #include "uart0.h"
 #include "led.h"
 #include "stdio.h"
+#include "ioDev.h"
 /************A1********/
 #define TXD3 BIT4
 #define RXD3 BIT5
@@ -219,6 +220,21 @@ int  UART3_Send(char * _data ,int _len, int _CR)
         UCA3TXBUF=10;
         
     }
+
+    /* 蓝牙打印 */
+    PT_IODev  ptDevBle =  getIODev();
+    if(ptDevBle->isCanUse() && (ptDevBle->open() == 0))
+    {
+        ptDevBle->sendMsg(_data,_len);
+        if(_CR)//补发一个换行
+        {
+            System_Delayms(1000);    //ptDevBle->sendMsg的间隔不能太短，esp32会反应不过来
+            ptDevBle->sendMsg("\r\n",2);
+        }
+        ptDevBle->close();
+    }
+
+
     return 0;
 }
 

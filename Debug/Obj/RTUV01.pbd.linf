@@ -3,7 +3,6 @@ G:\work\msp430\RTUV10_0826\RTUV10_0826\Debug\Obj\adc.pbi
 G:\work\msp430\RTUV10_0826\RTUV10_0826\Debug\Obj\BC95.pbi
 G:\work\msp430\RTUV10_0826\RTUV10_0826\Debug\Obj\blueTooth.pbi
 G:\work\msp430\RTUV10_0826\RTUV10_0826\Debug\Obj\common.pbi
-G:\work\msp430\RTUV10_0826\RTUV10_0826\Debug\Obj\communicateManager.pbi
 G:\work\msp430\RTUV10_0826\RTUV10_0826\Debug\Obj\Console.pbi
 G:\work\msp430\RTUV10_0826\RTUV10_0826\Debug\Obj\debug.pbi
 G:\work\msp430\RTUV10_0826\RTUV10_0826\Debug\Obj\dtu.pbi
@@ -11,6 +10,7 @@ G:\work\msp430\RTUV10_0826\RTUV10_0826\Debug\Obj\GSM.pbi
 G:\work\msp430\RTUV10_0826\RTUV10_0826\Debug\Obj\GTM900C.pbi
 G:\work\msp430\RTUV10_0826\RTUV10_0826\Debug\Obj\hydrologycommand.pbi
 G:\work\msp430\RTUV10_0826\RTUV10_0826\Debug\Obj\hydrologytask.pbi
+G:\work\msp430\RTUV10_0826\RTUV10_0826\Debug\Obj\ioDev.pbi
 G:\work\msp430\RTUV10_0826\RTUV10_0826\Debug\Obj\led.pbi
 G:\work\msp430\RTUV10_0826\RTUV10_0826\Debug\Obj\main.pbi
 G:\work\msp430\RTUV10_0826\RTUV10_0826\Debug\Obj\message.pbi
